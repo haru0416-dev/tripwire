@@ -1,0 +1,393 @@
+=== V inherit abstract base from another file
+--- file Assets/UdonIdeTests/Fixtures/Door.cs
+using UdonSharp;
+using UnityEngine;
+
+public class Door : BaseDoor
+{
+    public GameObject panel;
+
+    public override void Open()
+    {
+        base.Open();
+        panel.SetActive(false);
+    }
+
+    public override void Close()
+    {
+        panel.SetActive(true);
+    }
+
+    public override void Interact()
+    {
+        if (opens % 2 == 0) Open(); else Close();
+    }
+}
+=== V enum from another file with switch and goto case
+--- class
+public Mode mode = Mode.Closed;
+int Score(Mode m)
+{
+    switch (m)
+    {
+        case Mode.Open: return 1;
+        case Mode.Locked: goto case Mode.Closed;
+        case Mode.Closed: return 0;
+        default: return -1;
+    }
+}
+--- body
+mode = open ? Mode.Open : Mode.Closed;
+Debug.Log(Score(mode));
+=== V calling another behaviour's methods, fields and static
+--- class
+public Helper helper;
+--- body
+int y = helper.Twice(3) + Helper.Square(4);
+helper.Ping();
+helper.value += y;
+helper.SendCustomEvent(nameof(Helper.Ping));
+=== V udon events and network calls
+--- class
+public override void OnPlayerJoined(VRCPlayerApi player)
+{
+    if (Utilities.IsValid(player) && player.isLocal) SendCustomEventDelayedSeconds(nameof(Later), 1.5f);
+}
+public override void OnDeserialization() { panel.SetActive(!open); }
+public override void OnPostSerialization(VRC.Udon.Common.SerializationResult result) { if (!result.success) RequestSerialization(); }
+public void Later() { SendCustomNetworkEvent(VRC.Udon.Common.Interfaces.NetworkEventTarget.All, nameof(Later2)); }
+public void Later2() { }
+=== V field change callback property
+--- class
+[UdonSynced, FieldChangeCallback(nameof(Count))] int _count;
+public int Count
+{
+    get => _count;
+    set { _count = value; Debug.Log(value); }
+}
+--- body
+Count++;
+Count = Count * 2;
+=== V editor only code behind COMPILER_UDONSHARP
+--- class
+#if !COMPILER_UDONSHARP && UNITY_EDITOR
+void EditorOnly()
+{
+    var list = new System.Collections.Generic.List<int>();
+    try { list.Add(1); } catch { }
+    System.Action a = () => { };
+}
+#endif
+#if COMPILER_UDONSHARP
+int onlyInUdon;
+#endif
+=== V recursion with RecursiveMethod
+--- class
+[RecursiveMethod]
+int Fib(int n) { return n < 2 ? n : Fib(n - 1) + Fib(n - 2); }
+--- body
+Debug.Log(Fib(10));
+=== V DataList and DataDictionary
+--- class
+VRC.SDK3.Data.DataList list = new VRC.SDK3.Data.DataList();
+--- body
+var dict = new VRC.SDK3.Data.DataDictionary();
+dict["a"] = 1;
+list.Add("x");
+if (dict.TryGetValue("a", out VRC.SDK3.Data.DataToken token)) Debug.Log(token.Int);
+=== V strings and operators
+--- body
+string s = $"{3.5f:F2} {open} {gameObject.name}";
+switch (s) { case "a": break; default: s += "!"; break; }
+string t = s.Length > 3 ? s.Substring(0, 3).ToUpperInvariant() : s;
+string[] parts = "a,b,c".Split(',');
+int n = 0;
+n += parts.Length; n <<= 2; n ^= 3; n %= 7;
+Debug.Log(t + n + string.Join("-", parts));
+=== V null operators
+--- body
+GameObject g = null;
+var h = g ?? panel;
+Debug.Log(h == null ? "none" : h.name);
+=== V null conditional
+--- body
+Debug.Log(panel?.name);
+=== V jagged arrays and initializers
+--- body
+int[][] grid = new int[3][];
+grid[0] = new int[] { 1, 2, 3 };
+int[] more = { 4, 5 };
+grid[0][1] += more[1];
+Vector3 v = new Vector3 { x = 1 };
+Debug.Log(grid[0][1] + v.x);
+=== V multidimensional array
+--- body
+int[,] m = new int[2, 2];
+m[0, 1] = 3;
+=== V out var, named and default args
+--- class
+void Opt(int x = 1, string label = "a") { Debug.Log(label + x); }
+--- body
+if (int.TryParse("3", out var parsed)) Opt(label: "n", x: parsed);
+Opt();
+float c = Mathf.Clamp(value: 3f, min: 0f, max: 1f);
+=== V japanese identifiers
+--- class
+int 開いた回数;
+void 数える() { 開いた回数++; }
+--- body
+数える();
+=== V GetComponent of a U# behaviour and of an abstract base
+--- body
+var helper = GetComponent<Helper>();
+var bd = GetComponent<BaseDoor>();
+if (helper != null) helper.Ping();
+if (bd != null) bd.Close();
+var rs = GetComponentsInChildren<Renderer>(true);
+Debug.Log(rs.Length);
+=== V players array
+--- body
+var players = new VRCPlayerApi[VRCPlayerApi.GetPlayerCount()];
+VRCPlayerApi.GetPlayers(players);
+foreach (var p in players) if (Utilities.IsValid(p)) Debug.Log(p.displayName);
+=== V deep nesting of ifs and loops
+--- body
+for (int i = 0; i < 3; i++) { if (i > 0) { while (i < 2) { if (open) { for (int j = 0; j < 2; j++) { if (j == 1) { do { i++; } while (i < 2); } else { continue; } } } else { break; } } } }
+=== V instantiate and destroy
+--- body
+var copy = Object.Instantiate(panel);
+Destroy(copy, 2f);
+=== X tuple deconstruction
+--- body
+(int a, int b) = (1, 2);
+Debug.Log(a + b);
+=== X switch expression
+--- body
+int k = open switch { true => 1, false => 0 };
+=== X using statement
+--- body
+using (var ms = new System.IO.MemoryStream()) { }
+=== X lock statement
+--- body
+lock (this) { open = true; }
+=== X async method
+--- class
+async void LaterAsync() { }
+=== X decimal
+--- body
+decimal money = 1.5m;
+Debug.Log(money);
+=== X synced GameObject
+--- class
+[UdonSynced] GameObject syncedObject;
+=== X linear sync in manual mode
+--- class
+[UdonSynced(UdonSyncMode.Linear)] Vector3 smooth;
+=== X class name differs from file name
+--- file Assets/UdonIdeTests/Fixtures/Door.cs
+using UdonSharp;
+using UnityEngine;
+
+public class Door2 : UdonSharpBehaviour
+{
+    public override void Interact() { Debug.Log("x"); }
+}
+=== X two behaviours in one file
+--- file Assets/UdonIdeTests/Fixtures/Door.cs
+using UdonSharp;
+using UnityEngine;
+
+public class Door : UdonSharpBehaviour
+{
+    public override void Interact() { Debug.Log("x"); }
+}
+
+public class Other : UdonSharpBehaviour
+{
+    public void Run() { try { } catch { } }
+}
+=== X plain class beside the behaviour
+--- file Assets/UdonIdeTests/Fixtures/Door.cs
+using UdonSharp;
+using UnityEngine;
+
+public class Door : UdonSharpBehaviour
+{
+    public override void Interact() { Debug.Log(Util.Twice(2)); }
+}
+
+public static class Util
+{
+    public static int Twice(int x) { return x * 2; }
+}
+=== X error inside the called helper (other file)
+--- class
+public Helper helper;
+--- body
+helper.Ping();
+--- file Assets/UdonIdeTests/Fixtures/StageB/Helper.cs
+using UdonSharp;
+using UnityEngine;
+
+public class Helper : UdonSharpBehaviour
+{
+    public int value;
+    public int Twice(int x) { return x * 2; }
+    public void Ping() { try { value++; } catch { } }
+    public static int Square(int x) { return x * x; }
+}
+=== X error inside the base class (other file)
+--- file Assets/UdonIdeTests/Fixtures/Door.cs
+using UdonSharp;
+using UnityEngine;
+
+public class Door : BaseDoor
+{
+    public override void Close() { }
+}
+--- file Assets/UdonIdeTests/Fixtures/StageB/BaseDoor.cs
+using UdonSharp;
+
+public abstract class BaseDoor : UdonSharpBehaviour
+{
+    public int opens;
+    public virtual void Open() { System.Action a = () => opens++; }
+    public abstract void Close();
+}
+=== X lambda hidden in a field initializer
+--- class
+System.Func<int, int> twice = x => x * 2;
+=== X generic method on another behaviour (other file)
+--- class
+public Helper helper;
+--- body
+helper.Ping();
+--- file Assets/UdonIdeTests/Fixtures/StageB/Helper.cs
+using UdonSharp;
+using UnityEngine;
+
+public class Helper : UdonSharpBehaviour
+{
+    public int value;
+    public int Twice(int x) { return x * 2; }
+    public void Ping() { value++; }
+    public T Same<T>(T x) { return x; }
+    public static int Square(int x) { return x * x; }
+}
+=== X second error after a first one
+--- body
+try { open = true; } catch { }
+var list = new System.Collections.Generic.List<int>();
+=== X non override udon event name
+--- class
+public void OnPlayerJoined(VRCPlayerApi player) { }
+=== X reserved looking names
+--- class
+int __hidden;
+public void _update() { }
+=== X string builder
+--- body
+var sb = new System.Text.StringBuilder();
+sb.Append("x");
+=== X DateTime and Math
+--- body
+var now = System.DateTime.Now;
+int big = System.Math.Max(1, 2);
+Debug.Log(now.Hour + big);
+=== X enum flags arithmetic
+--- body
+Mode m = Mode.Open | Mode.Locked;
+Debug.Log((int)m);
+=== X property on another behaviour
+--- class
+public Helper helper;
+--- body
+helper.enabled = false;
+helper.transform.position = Vector3.zero;
+helper.gameObject.SetActive(false);
+=== X static field in another behaviour (other file)
+--- class
+public Helper helper;
+--- body
+helper.Ping();
+--- file Assets/UdonIdeTests/Fixtures/StageB/Helper.cs
+using UdonSharp;
+using UnityEngine;
+
+public class Helper : UdonSharpBehaviour
+{
+    public static int shared;
+    public int value;
+    public int Twice(int x) { return x * 2; }
+    public void Ping() { value++; shared++; }
+    public static int Square(int x) { return x * x; }
+}
+=== X interface implementation
+--- file Assets/UdonIdeTests/Fixtures/Door.cs
+using UdonSharp;
+using UnityEngine;
+
+public interface IOpenable { void Open(); }
+
+public class Door : UdonSharpBehaviour, IOpenable
+{
+    public void Open() { }
+}
+=== X extension method
+--- file Assets/UdonIdeTests/Fixtures/Door.cs
+using UdonSharp;
+using UnityEngine;
+
+public static class DoorExtensions
+{
+    public static int Twice(this int x) { return x * 2; }
+}
+
+public class Door : UdonSharpBehaviour
+{
+    public override void Interact() { Debug.Log(3.Twice()); }
+}
+=== X delegate field
+--- class
+System.Action onOpen;
+--- body
+if (onOpen != null) onOpen();
+=== X sizeof and default of T
+--- body
+int size = sizeof(int);
+Debug.Log(size);
+=== X unsafe
+--- body
+unsafe { int x = 1; int* p = &x; }
+=== X stackalloc
+--- body
+System.Span<int> s = stackalloc int[4];
+=== X ref local
+--- body
+int[] arr = { 1, 2 };
+ref int first = ref arr[0];
+first = 3;
+=== X yield in method
+--- class
+System.Collections.IEnumerator Steps() { yield return null; }
+=== X object with dynamic type checks
+--- body
+object o = 3;
+if (o is int) Debug.Log("int");
+var asGo = o as GameObject;
+=== X overloaded own methods
+--- class
+void Put(int x) { }
+void Put(string x) { }
+void Put(GameObject x) { }
+--- body
+Put(1); Put("a"); Put(panel);
+=== X virtual method in a non abstract behaviour
+--- class
+public virtual void Hook() { }
+=== X goto label
+--- body
+int tries = 0;
+again:
+tries++;
+if (tries < 3) goto again;

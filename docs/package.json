@@ -1,0 +1,19 @@
+{
+  "name": "tripwire-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview",
+    "data": "bun run catalog && bun run scripts/icon-data.ts",
+    "catalog": "cd ../tests/Tripwire.CatalogExport && mise exec -- dotnet run -- ../../docs/.vitepress/data/catalog.json",
+    "icons": "bun run scripts/render-icons.ts"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "lucide-static": "0.560.0",
+    "vitepress": "1.6.4",
+    "vue": "3.5.43"
+  }
+}

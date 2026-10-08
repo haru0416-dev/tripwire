@@ -1,0 +1,27 @@
+{
+  "name": "dev.haru0416.tripwire",
+  "displayName": "Tripwire",
+  "version": "0.1.0",
+  "unity": "2022.3",
+  "description": "Make VRChat world gimmicks without code: \"when → what to do\" cards in the Inspector. Japanese and English UI. / コードを書かずに、Inspector の「いつ → 何をする」カードでワールドのギミックを作れます。",
+  "author": {
+    "name": "haru0416-dev",
+    "url": "https://github.com/haru0416-dev"
+  },
+  "url": "https://github.com/haru0416-dev/tripwire",
+  "documentationUrl": "https://haru0416-dev.github.io/tripwire/",
+  "changelogUrl": "https://github.com/haru0416-dev/tripwire/blob/main/Packages/dev.haru0416.tripwire/CHANGELOG.md",
+  "licensesUrl": "https://github.com/haru0416-dev/tripwire/blob/main/LICENSE",
+  "license": "MIT",
+  "vpmDependencies": {
+    "com.vrchat.worlds": "^3.10.5",
+    "dev.haru0416.udon-bridge": "^0.1.0"
+  },
+  "samples": [
+    {
+      "displayName": "Recipes",
+      "description": "The recipes of the manual as a scene: click to show / hide a mirror, a switch everyone shares.",
+      "path": "Samples~/Recipes"
+    }
+  ]
+}

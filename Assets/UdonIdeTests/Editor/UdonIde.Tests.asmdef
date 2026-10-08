@@ -1,0 +1,9 @@
+{
+    "name": "UdonIde.Tests",
+    "references": ["UnityEngine.TestRunner", "UnityEditor.TestRunner", "UdonIde.Editor", "UdonBridge.Editor", "UdonBridge.Compiler", "UdonSharp.Editor", "UdonSharp.Runtime", "VRC.Udon", "VRC.Udon.Editor", "VRC.SDKBase", "VRC.SDK3"],
+    "includePlatforms": ["Editor"],
+    "overrideReferences": true,
+    "precompiledReferences": ["nunit.framework.dll", "VRCSDK3.dll", "VRCSDKBase.dll", "VRC.Udon.Common.dll", "System.Collections.Immutable.dll", "Microsoft.CodeAnalysis.dll", "Microsoft.CodeAnalysis.CSharp.dll"],
+    "autoReferenced": false,
+    "defineConstraints": ["UNITY_INCLUDE_TESTS"]
+}

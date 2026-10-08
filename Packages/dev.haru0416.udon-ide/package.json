@@ -1,0 +1,12 @@
+{
+  "name": "dev.haru0416.udon-ide",
+  "displayName": "Udon IDE (spike)",
+  "version": "0.0.1",
+  "unity": "2022.3",
+  "description": "Unreleased preview: a lightweight UdonSharp editor inside Unity.",
+  "vpmDependencies": {
+    "com.vrchat.worlds": "^3.10.5",
+    "dev.haru0416.udon-bridge": "^0.1.0"
+  },
+  "license": "MIT"
+}

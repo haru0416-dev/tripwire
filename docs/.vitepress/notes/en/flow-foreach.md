@@ -1,0 +1,3 @@
+Puts each item of a list variable into **Each item into** in turn and runs the actions under Do. Target the item variable in those actions to do the same to the whole list. **Round into** gets 0, 1, 2...
+
+It walks the list as it was when the loop began: changing the list variable inside Do doesn't change what is walked. With an empty list, Do doesn't run. **Each item into** and **Round into** need two different variables that aren't synced.

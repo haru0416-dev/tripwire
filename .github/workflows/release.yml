@@ -1,0 +1,97 @@
+# Release: run it by hand (Actions → Release → Run workflow, then pick the package) after raising "version" in its
+# package.json and adding its section to its CHANGELOG.md. It checks the version, runs the Core tests, and makes the
+# GitHub release that VCC installs from: the tag is "<package>@<version>" (one repository, several packages), the
+# assets are the package zip (package.json at its root, as VPM listings read it) and package.json. A package that
+# depends on another one here (Tripwire on Udon Bridge) is refused until that version is released.
+# Unity tests need a Unity license, so run scripts/run-all-tests.sh locally before releasing.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to release
+        type: choice
+        options:  # dev.haru0416.udon-ide is an unreleased preview
+          - dev.haru0416.tripwire
+          - dev.haru0416.udon-bridge
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  PACKAGE: ${{ inputs.package }}
+  # Secrets can't be read in "if:", so whether one is set is passed through here.
+  HAS_VPM_TOKEN: ${{ secrets.VPM_DISPATCH_TOKEN != '' }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # tags and history: the dependency check compares with released versions
+
+      - name: Release from main only
+        run: |
+          [ "$GITHUB_REF" = "refs/heads/main" ] || { echo "::error::run this from main (it ran from $GITHUB_REF)"; exit 1; }
+
+      - name: Read and check the version
+        id: version
+        run: |
+          dir="Packages/$PACKAGE"
+          name=$(jq -r .name "$dir/package.json")
+          version=$(jq -r .version "$dir/package.json")
+          [ "$name" = "$PACKAGE" ] || { echo "::error::package.json name is '$name', expected '$PACKAGE'"; exit 1; }
+          echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' \
+            || { echo "::error::version '$version' is not semver"; exit 1; }
+          tag="$PACKAGE@$version"
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "::error::tag $tag already exists: raise the version in package.json"; exit 1
+          fi
+          # Dependencies on packages of this repository: their current version released, unchanged since, in range.
+          python3 scripts/check-release-deps.py "$PACKAGE"
+          # The release notes: this version's section of CHANGELOG.md (from "## <version>" to the next "## ").
+          awk -v v="$version" '$0 == "## " v {on=1; next} /^## / {on=0} on' "$dir/CHANGELOG.md" > notes.md
+          [ -s notes.md ] || { echo "::error::CHANGELOG.md has no '## $version' section"; exit 1; }
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "title=$(jq -r .displayName "$dir/package.json") $version" >> "$GITHUB_OUTPUT"
+          echo "zip=$PACKAGE-$version.zip" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Core tests
+        working-directory: tests/Tripwire.Core.Tests
+        run: dotnet test --nologo
+
+      - name: Package zip
+        working-directory: Packages/${{ env.PACKAGE }}
+        run: |
+          zip -r -X "$GITHUB_WORKSPACE/${{ steps.version.outputs.zip }}" . -x '*.DS_Store'
+          unzip -l "$GITHUB_WORKSPACE/${{ steps.version.outputs.zip }}" package.json
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ steps.version.outputs.version }}"
+          prerelease=""; case "$v" in *-*) prerelease="--prerelease";; esac
+          gh release create "${{ steps.version.outputs.tag }}" "${{ steps.version.outputs.zip }}" "Packages/$PACKAGE/package.json" \
+            --target "$GITHUB_SHA" --title "${{ steps.version.outputs.title }}" --notes-file notes.md $prerelease
+
+      # Rebuild the VPM listing (haru0416-dev/vpm) so VCC sees the new version. Needs a VPM_DISPATCH_TOKEN secret: a
+      # fine-grained token with Contents: read and write on haru0416-dev/vpm. Without it the listing is rebuilt by hand.
+      - name: Rebuild the VPM listing
+        env:
+          GH_TOKEN: ${{ secrets.VPM_DISPATCH_TOKEN }}
+        if: env.HAS_VPM_TOKEN == 'true'
+        # The release exists by now: a failure here only means the listing is rebuilt by hand, not a failed release.
+        run: |
+          gh api repos/haru0416-dev/vpm/dispatches -f event_type=package-released \
+            || echo "::warning::could not ask haru0416-dev/vpm to rebuild the listing (check the token and that the repository exists): run its workflow by hand"

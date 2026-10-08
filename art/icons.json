@@ -1,0 +1,32 @@
+{
+  "_comment": "Lucide icon (lucide.dev, ISC) for each category, event and action, and the editor's own buttons. docs/scripts/render-icons.ts renders them into Packages/dev.haru0416.tripwire/Editor/Icons; the docs site reads this file too.",
+  "Categories": {
+    "Common": "mouse-pointer-click", "Pickup": "hand-grab", "Player": "user", "Physics": "box", "Avatar": "person-standing",
+    "Input": "gamepad-2", "UI": "toggle-right", "Video": "clapperboard", "Network": "cloud", "Frame": "film", "Load": "download",
+    "Economy": "shopping-cart", "Link": "link", "Advanced": "ellipsis", "Show": "eye", "Move": "move", "SoundFx": "volume-2",
+    "Text": "type", "Flow": "git-branch", "Variable": "variable", "Saved": "bookmark", "Favorites": "star"
+  },
+  "Events": {
+    "Interact": "mouse-pointer-click", "OnPlayerTriggerEnter": "log-in", "OnPlayerTriggerExit": "log-out", "Start": "play",
+    "Timer": "timer", "Custom": "radio", "OnVariableChanged": "variable", "OnPlayerJoined": "user-plus", "OnPlayerLeft": "user-minus"
+  },
+  "Actions": {
+    "GameObject.SetActive": "eye", "GameObject.ToggleActive": "arrow-left-right", "Collider.SetEnabled": "square-dashed",
+    "Renderer.SetEnabled": "shapes", "Behaviour.SetEnabled": "power",
+    "Transform.SetPosition": "map-pin", "Transform.MoveTo": "move", "Animator.SetTrigger": "zap", "Animator.SetBool": "toggle-left",
+    "Animator.SetInteger": "hash", "Animator.SetFloat": "sliders-horizontal", "Animator.Play": "activity",
+    "AudioSource.Play": "volume-2", "AudioSource.Stop": "volume-x", "AudioSource.PlayOneShot": "music",
+    "ParticleSystem.Play": "sparkles", "ParticleSystem.Stop": "sparkle",
+    "Text.SetText": "type", "Player.Teleport": "navigation", "Player.SetSpeed": "gauge",
+    "Pickup.Drop": "hand", "Networking.TakeOwnership": "crown",
+    "Flow.If": "split", "Flow.Repeat": "repeat", "Flow.ForEach": "list", "Flow.While": "iteration-cw",
+    "Flow.Break": "arrow-right-from-line", "Flow.Continue": "skip-forward", "Flow.Stop": "undo-2",
+    "Timer.Start": "timer", "Timer.Stop": "timer-off",
+    "Variable.Set": "equal", "Variable.Toggle": "toggle-left", "Variable.Add": "plus", "Variable.Random": "dices",
+    "Video.PlayUrl": "monitor-play", "Video.LoadUrl": "monitor-down", "Video.Play": "play", "Video.Pause": "pause",
+    "Video.Stop": "circle-stop", "Video.SetTime": "fast-forward", "Video.SetLoop": "repeat-1",
+    "Script.Call": "code", "Event.Send": "send", "Event.SendDelayed": "clock", "Trigger.SetVariable": "pencil",
+    "Trigger.GetVariable": "inbox", "Udon.Call": "terminal", "Debug.Log": "scroll-text"
+  },
+  "Ui": { "List": "list-checks", "Menu": "ellipsis-vertical", "Switch": "toggle-right" }
+}

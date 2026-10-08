@@ -1,0 +1,12 @@
+{
+    "name": "UdonBridge.Compiler",
+    "rootNamespace": "UdonBridge",
+    "references": ["UdonBridge.Editor", "UdonSharp.Editor", "UdonSharp.Runtime", "VRC.Udon", "VRC.Udon.Editor"],
+    "includePlatforms": ["Editor"],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": ["Microsoft.CodeAnalysis.dll", "Microsoft.CodeAnalysis.CSharp.dll", "System.Collections.Immutable.dll", "VRC.Udon.Common.dll", "VRCSDK3.dll", "VRCSDKBase.dll"],
+    "autoReferenced": false,
+    "noEngineReferences": false
+}

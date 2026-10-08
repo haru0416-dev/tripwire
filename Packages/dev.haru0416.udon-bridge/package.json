@@ -1,0 +1,19 @@
+{
+  "name": "dev.haru0416.udon-bridge",
+  "displayName": "Udon Bridge",
+  "version": "0.1.0",
+  "unity": "2022.3",
+  "description": "Editor helpers over UdonSharp and Udon internals, kept in one place: what Udon exposes, UdonSharp's names for members, program assets, swapping programs.",
+  "author": {
+    "name": "haru0416-dev",
+    "url": "https://github.com/haru0416-dev"
+  },
+  "url": "https://github.com/haru0416-dev/tripwire",
+  "licensesUrl": "https://github.com/haru0416-dev/tripwire/blob/main/LICENSE",
+  "license": "MIT",
+  "vpmDependencies": {
+    "com.vrchat.worlds": "^3.10.5"
+  },
+  "documentationUrl": "https://github.com/haru0416-dev/tripwire/tree/main/Packages/dev.haru0416.udon-bridge#readme",
+  "changelogUrl": "https://github.com/haru0416-dev/tripwire/blob/main/Packages/dev.haru0416.udon-bridge/CHANGELOG.md"
+}

@@ -1,0 +1,10 @@
+{
+    "name": "Tripwire.Runtime",
+    "rootNamespace": "Tripwire",
+    "references": ["VRC.SDKBase", "VRC.Udon"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "autoReferenced": true,
+    "noEngineReferences": false
+}

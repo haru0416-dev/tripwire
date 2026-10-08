@@ -1,0 +1,5431 @@
+{
+  "categories": [
+    {
+      "id": "Common",
+      "kind": "event",
+      "name": {
+        "ja": "よく使う",
+        "en": "Common"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Pickup",
+      "kind": "event",
+      "name": {
+        "ja": "ピックアップ",
+        "en": "Pickups"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Player",
+      "kind": "event",
+      "name": {
+        "ja": "プレイヤー",
+        "en": "Players"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Physics",
+      "kind": "event",
+      "name": {
+        "ja": "当たり判定・物理",
+        "en": "Physics & collisions"
+      },
+      "advanced": true
+    },
+    {
+      "id": "Avatar",
+      "kind": "event",
+      "name": {
+        "ja": "アバター・コンタクト・PhysBone",
+        "en": "Avatars, contacts & PhysBones"
+      },
+      "advanced": true
+    },
+    {
+      "id": "Input",
+      "kind": "event",
+      "name": {
+        "ja": "入力（ボタン・MIDI）",
+        "en": "Input (buttons, MIDI)"
+      },
+      "advanced": true
+    },
+    {
+      "id": "UI",
+      "kind": "event",
+      "name": {
+        "ja": "UI（ボタン・トグル・スライダー）",
+        "en": "UI (buttons, toggles, sliders)"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Video",
+      "kind": "event",
+      "name": {
+        "ja": "動画プレイヤー",
+        "en": "Video player"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Network",
+      "kind": "event",
+      "name": {
+        "ja": "同期・保存データ",
+        "en": "Sync & saved data"
+      },
+      "advanced": true
+    },
+    {
+      "id": "Frame",
+      "kind": "event",
+      "name": {
+        "ja": "毎フレーム・描画",
+        "en": "Every frame & rendering"
+      },
+      "advanced": true
+    },
+    {
+      "id": "Load",
+      "kind": "event",
+      "name": {
+        "ja": "文字・画像の読み込み",
+        "en": "Loading text & images"
+      },
+      "advanced": true
+    },
+    {
+      "id": "Economy",
+      "kind": "event",
+      "name": {
+        "ja": "ストア・購入",
+        "en": "Store & purchases"
+      },
+      "advanced": true
+    },
+    {
+      "id": "Link",
+      "kind": "event",
+      "name": {
+        "ja": "連携（イベント・スクリプト）",
+        "en": "Other triggers & scripts"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Advanced",
+      "kind": "event",
+      "name": {
+        "ja": "上級",
+        "en": "Advanced"
+      },
+      "advanced": true
+    },
+    {
+      "id": "Show",
+      "kind": "action",
+      "name": {
+        "ja": "表示・非表示",
+        "en": "Show / hide"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Move",
+      "kind": "action",
+      "name": {
+        "ja": "移動・アニメーション",
+        "en": "Move"
+      },
+      "advanced": false
+    },
+    {
+      "id": "SoundFx",
+      "kind": "action",
+      "name": {
+        "ja": "音・エフェクト",
+        "en": "Sound & effects"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Text",
+      "kind": "action",
+      "name": {
+        "ja": "テキスト",
+        "en": "Text"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Player",
+      "kind": "action",
+      "name": {
+        "ja": "プレイヤー",
+        "en": "Players"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Pickup",
+      "kind": "action",
+      "name": {
+        "ja": "ピックアップ",
+        "en": "Pickups"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Flow",
+      "kind": "action",
+      "name": {
+        "ja": "If・ループ・タイマー",
+        "en": "If, loops, timers"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Variable",
+      "kind": "action",
+      "name": {
+        "ja": "変数",
+        "en": "Variables"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Video",
+      "kind": "action",
+      "name": {
+        "ja": "動画プレイヤー",
+        "en": "Video player"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Link",
+      "kind": "action",
+      "name": {
+        "ja": "連携（イベント・スクリプト）",
+        "en": "Other triggers & scripts"
+      },
+      "advanced": false
+    },
+    {
+      "id": "Advanced",
+      "kind": "action",
+      "name": {
+        "ja": "上級",
+        "en": "Advanced"
+      },
+      "advanced": false
+    }
+  ],
+  "events": [
+    {
+      "id": "Interact",
+      "category": "Common",
+      "code": "Interact",
+      "name": {
+        "ja": "クリックしたとき",
+        "en": "Interact"
+      },
+      "description": {
+        "ja": "このオブジェクトをクリック（使う）したとき。コライダーが必要です。",
+        "en": "The local player clicks/uses this object. Needs a Collider."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void Interact()",
+      "needs": [
+        "Collider"
+      ]
+    },
+    {
+      "id": "OnPlayerTriggerEnter",
+      "category": "Common",
+      "code": "OnPlayerTriggerEnter",
+      "name": {
+        "ja": "プレイヤーが範囲に入ったとき",
+        "en": "On Player Trigger Enter"
+      },
+      "description": {
+        "ja": "プレイヤーがこのオブジェクトのコライダー（Is Trigger）の範囲に入ったとき。",
+        "en": "A player enters this trigger collider."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerTriggerEnter(VRCPlayerApi player)",
+      "needs": [
+        "Area"
+      ]
+    },
+    {
+      "id": "OnPlayerTriggerExit",
+      "category": "Common",
+      "code": "OnPlayerTriggerExit",
+      "name": {
+        "ja": "プレイヤーが範囲から出たとき",
+        "en": "On Player Trigger Exit"
+      },
+      "description": {
+        "ja": "プレイヤーがこのオブジェクトのコライダー（Is Trigger）の範囲から出たとき。",
+        "en": "A player leaves this trigger collider."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerTriggerExit(VRCPlayerApi player)",
+      "needs": [
+        "Area"
+      ]
+    },
+    {
+      "id": "Start",
+      "category": "Common",
+      "code": "Start",
+      "name": {
+        "ja": "開始したとき",
+        "en": "Start"
+      },
+      "description": {
+        "ja": "このオブジェクトが動き出したとき。ふつうはワールドを読み込んだときで、非表示で始まるオブジェクトなら最初に表示されたとき。各プレイヤーの画面で一度ずつ。",
+        "en": "Once when the world loads (on every client)."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void Start()",
+      "needs": []
+    },
+    {
+      "id": "Timer",
+      "category": "Common",
+      "code": "Timer",
+      "name": {
+        "ja": "タイマー（一定時間ごと）",
+        "en": "Timer"
+      },
+      "description": {
+        "ja": "決めた秒数ごとに（または一度だけ）実行します。秒数を最小〜最大で決めると、毎回ランダムな間隔になります。オブジェクトを非表示にしても動き続けます（止めるときは「オブジェクトが無効になったとき」に「タイマーを止める」を置きます）。",
+        "en": "Every few seconds (or once after them), optionally at random intervals. Keeps running while the object is hidden (add Stop Timer to OnDisable to pause it)."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": true,
+      "signature": null,
+      "needs": []
+    },
+    {
+      "id": "Custom",
+      "category": "Common",
+      "code": "Custom Event",
+      "name": {
+        "ja": "カスタムイベント",
+        "en": "Custom"
+      },
+      "description": {
+        "ja": "名前を付けたイベントです。ほかのトリガーの「カスタムイベントを呼ぶ」や、ほかのスクリプトから呼び出せます。",
+        "en": "A named event, run by a Send Event action or by other scripts via SendCustomEvent."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": true,
+      "signature": null,
+      "needs": []
+    },
+    {
+      "id": "OnVariableChanged",
+      "category": "Common",
+      "code": "OnVariableChanged",
+      "name": {
+        "ja": "変数が変わったとき",
+        "en": "On Variable Changed"
+      },
+      "description": {
+        "ja": "変数の値が変わったとき。同期した変数なら、ほかの人が変えたときや、あとから来たときも。",
+        "en": "When a variable changes, including changes received from the network and the state late joiners receive."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": true,
+      "signature": null,
+      "needs": []
+    },
+    {
+      "id": "OnPickup",
+      "category": "Pickup",
+      "code": "OnPickup",
+      "name": {
+        "ja": "ピックアップを持ったとき",
+        "en": "On Pickup"
+      },
+      "description": {
+        "ja": "自分がこのピックアップを手に持ったとき。",
+        "en": "The local player picks this object up."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPickup()",
+      "needs": [
+        "Pickup"
+      ]
+    },
+    {
+      "id": "OnDrop",
+      "category": "Pickup",
+      "code": "OnDrop",
+      "name": {
+        "ja": "ピックアップを離したとき",
+        "en": "On Drop"
+      },
+      "description": {
+        "ja": "自分がこのピックアップを手から離したとき。",
+        "en": "The local player drops this object."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnDrop()",
+      "needs": [
+        "Pickup"
+      ]
+    },
+    {
+      "id": "OnPickupUseDown",
+      "category": "Pickup",
+      "code": "OnPickupUseDown",
+      "name": {
+        "ja": "ピックアップを使ったとき",
+        "en": "On Pickup Use Down"
+      },
+      "description": {
+        "ja": "持った状態で Use（トリガー）ボタンを押したとき。",
+        "en": "The local player presses Use while holding this."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPickupUseDown()",
+      "needs": [
+        "Pickup"
+      ]
+    },
+    {
+      "id": "OnPickupUseUp",
+      "category": "Pickup",
+      "code": "OnPickupUseUp",
+      "name": {
+        "ja": "ピックアップを使い終えたとき",
+        "en": "On Pickup Use Up"
+      },
+      "description": {
+        "ja": "持った状態で Use（トリガー）ボタンを離したとき。",
+        "en": "The local player releases Use while holding this."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPickupUseUp()",
+      "needs": [
+        "Pickup"
+      ]
+    },
+    {
+      "id": "OnPlayerJoined",
+      "category": "Player",
+      "code": "OnPlayerJoined",
+      "name": {
+        "ja": "プレイヤーが参加したとき",
+        "en": "On Player Joined"
+      },
+      "description": {
+        "ja": "プレイヤーがインスタンスに参加したとき（自分が参加したときは、先にいた人の分も届きます）。",
+        "en": "A player joins the instance (also fires for players already there when you join)."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerJoined(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerLeft",
+      "category": "Player",
+      "code": "OnPlayerLeft",
+      "name": {
+        "ja": "プレイヤーが退出したとき",
+        "en": "On Player Left"
+      },
+      "description": {
+        "ja": "プレイヤーがインスタンスから退出したとき。",
+        "en": "A player leaves the instance."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerLeft(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerRespawn",
+      "category": "Player",
+      "code": "OnPlayerRespawn",
+      "name": {
+        "ja": "リスポーンしたとき",
+        "en": "On Player Respawn"
+      },
+      "description": {
+        "ja": "プレイヤーがメニューの Respawn を押して、リスポーンしたとき。",
+        "en": "A player respawns with Respawn in their menu."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerRespawn(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnStationEntered",
+      "category": "Player",
+      "code": "OnStationEntered",
+      "name": {
+        "ja": "ステーションに座ったとき",
+        "en": "On Station Entered"
+      },
+      "description": {
+        "ja": "プレイヤーがこのステーション（VRC Station、椅子など）に座ったとき。",
+        "en": "A player sits in this station."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnStationEntered(VRCPlayerApi player)",
+      "needs": [
+        "Station"
+      ]
+    },
+    {
+      "id": "OnStationExited",
+      "category": "Player",
+      "code": "OnStationExited",
+      "name": {
+        "ja": "ステーションから降りたとき",
+        "en": "On Station Exited"
+      },
+      "description": {
+        "ja": "プレイヤーがこのステーションから降りたとき。",
+        "en": "A player leaves this station."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnStationExited(VRCPlayerApi player)",
+      "needs": [
+        "Station"
+      ]
+    },
+    {
+      "id": "OnPlayerCollisionEnter",
+      "category": "Physics",
+      "code": "OnPlayerCollisionEnter",
+      "name": {
+        "ja": "プレイヤーがぶつかったとき",
+        "en": "On Player Collision Enter"
+      },
+      "description": {
+        "ja": "プレイヤーがこのオブジェクトにぶつかったとき。",
+        "en": "A player collides with this collider."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerCollisionEnter(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnTriggerEnter",
+      "category": "Physics",
+      "code": "OnTriggerEnter",
+      "name": {
+        "ja": "物体が範囲に入ったとき",
+        "en": "On Trigger Enter (Collider)"
+      },
+      "description": {
+        "ja": "プレイヤー以外の物体（コライダー）が、このオブジェクトの範囲に入ったとき。",
+        "en": "A non-player collider enters this trigger."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "入ってきた物",
+            "en": "What entered"
+          },
+          "type": {
+            "ja": "Collider",
+            "en": "Collider"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnTriggerEnter(Collider other)",
+      "needs": []
+    },
+    {
+      "id": "OnTriggerExit",
+      "category": "Physics",
+      "code": "OnTriggerExit",
+      "name": {
+        "ja": "物体が範囲から出たとき",
+        "en": "On Trigger Exit (Collider)"
+      },
+      "description": {
+        "ja": "プレイヤー以外の物体（コライダー）が、このオブジェクトの範囲から出たとき。",
+        "en": "A non-player collider leaves this trigger."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "出ていった物",
+            "en": "What left"
+          },
+          "type": {
+            "ja": "Collider",
+            "en": "Collider"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnTriggerExit(Collider other)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerTriggerStay",
+      "category": "Physics",
+      "code": "OnPlayerTriggerStay",
+      "name": {
+        "ja": "プレイヤーが範囲にいる間",
+        "en": "On Player Trigger Stay"
+      },
+      "description": {
+        "ja": "プレイヤーがこのオブジェクトの範囲（トリガー）の中にいる間、物理演算のたびに（ふつう 1 秒に 50 回）。",
+        "en": "Every physics step while a player stays in this trigger collider."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "public override void OnPlayerTriggerStay(VRCPlayerApi player)",
+      "needs": [
+        "Area"
+      ]
+    },
+    {
+      "id": "OnPlayerCollisionExit",
+      "category": "Physics",
+      "code": "OnPlayerCollisionExit",
+      "name": {
+        "ja": "プレイヤーが離れたとき",
+        "en": "On Player Collision Exit"
+      },
+      "description": {
+        "ja": "ぶつかっていたプレイヤーが、このオブジェクトから離れたとき。",
+        "en": "A player stops touching this collider."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerCollisionExit(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerCollisionStay",
+      "category": "Physics",
+      "code": "OnPlayerCollisionStay",
+      "name": {
+        "ja": "プレイヤーが触れている間",
+        "en": "On Player Collision Stay"
+      },
+      "description": {
+        "ja": "プレイヤーがこのオブジェクトに触れている間、物理演算のたびに（ふつう 1 秒に 50 回）。",
+        "en": "Every physics step while a player touches this collider."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "public override void OnPlayerCollisionStay(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerParticleCollision",
+      "category": "Physics",
+      "code": "OnPlayerParticleCollision",
+      "name": {
+        "ja": "パーティクルがプレイヤーに当たったとき",
+        "en": "On Player Particle Collision"
+      },
+      "description": {
+        "ja": "このパーティクルシステムの粒がプレイヤーに当たったとき（Collision の Send Collision Messages が必要）。",
+        "en": "A particle of this particle system hits a player."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerParticleCollision(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnControllerColliderHitPlayer",
+      "category": "Physics",
+      "code": "OnControllerColliderHitPlayer",
+      "name": {
+        "ja": "キャラクターコントローラーがプレイヤーにぶつかったとき",
+        "en": "On Controller Collider Hit Player"
+      },
+      "description": {
+        "ja": "このオブジェクトの CharacterController が、動いている途中でプレイヤーにぶつかったとき。",
+        "en": "This object's CharacterController hits a player while moving."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "ぶつかった情報",
+            "en": "The hit"
+          },
+          "type": {
+            "ja": "ControllerColliderPlayerHit",
+            "en": "ControllerColliderPlayerHit"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnControllerColliderHitPlayer(ControllerColliderPlayerHit hit)",
+      "needs": []
+    },
+    {
+      "id": "OnTriggerStay",
+      "category": "Physics",
+      "code": "OnTriggerStay",
+      "name": {
+        "ja": "物体が範囲にいる間",
+        "en": "On Trigger Stay (Collider)"
+      },
+      "description": {
+        "ja": "プレイヤー以外の物体（コライダー）が範囲の中にいる間、物理演算のたびに（ふつう 1 秒に 50 回）。",
+        "en": "Every physics step while a non-player collider stays in this trigger."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "中にいる物",
+            "en": "What is inside"
+          },
+          "type": {
+            "ja": "Collider",
+            "en": "Collider"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnTriggerStay(Collider other)",
+      "needs": []
+    },
+    {
+      "id": "OnCollisionEnter",
+      "category": "Physics",
+      "code": "OnCollisionEnter",
+      "name": {
+        "ja": "物体がぶつかったとき",
+        "en": "On Collision Enter"
+      },
+      "description": {
+        "ja": "プレイヤー以外の物体がこのオブジェクトにぶつかったとき（どちらかに Rigidbody が必要）。",
+        "en": "A non-player collider hits this one (needs a Rigidbody on one of them)."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "ぶつかった相手",
+            "en": "What hit it"
+          },
+          "type": {
+            "ja": "Collision",
+            "en": "Collision"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnCollisionEnter(Collision other)",
+      "needs": []
+    },
+    {
+      "id": "OnCollisionExit",
+      "category": "Physics",
+      "code": "OnCollisionExit",
+      "name": {
+        "ja": "物体が離れたとき",
+        "en": "On Collision Exit"
+      },
+      "description": {
+        "ja": "ぶつかっていた物体が離れたとき。",
+        "en": "A non-player collider stops touching this one."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "離れた相手",
+            "en": "What left it"
+          },
+          "type": {
+            "ja": "Collision",
+            "en": "Collision"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnCollisionExit(Collision other)",
+      "needs": []
+    },
+    {
+      "id": "OnCollisionStay",
+      "category": "Physics",
+      "code": "OnCollisionStay",
+      "name": {
+        "ja": "物体が触れている間",
+        "en": "On Collision Stay"
+      },
+      "description": {
+        "ja": "物体が触れている間、物理演算のたびに（ふつう 1 秒に 50 回）。",
+        "en": "Every physics step while a non-player collider touches this one."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "触れている相手",
+            "en": "What touches it"
+          },
+          "type": {
+            "ja": "Collision",
+            "en": "Collision"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnCollisionStay(Collision other)",
+      "needs": []
+    },
+    {
+      "id": "OnTriggerEnter2D",
+      "category": "Physics",
+      "code": "OnTriggerEnter2D",
+      "name": {
+        "ja": "2D の物体が範囲に入ったとき",
+        "en": "On Trigger Enter 2D"
+      },
+      "description": {
+        "ja": "2D のコライダーが、この 2D の範囲（トリガー）に入ったとき。",
+        "en": "A 2D collider enters this 2D trigger."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "入ってきた物",
+            "en": "What entered"
+          },
+          "type": {
+            "ja": "Collider2D",
+            "en": "Collider2D"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnTriggerEnter2D(Collider2D other)",
+      "needs": []
+    },
+    {
+      "id": "OnTriggerExit2D",
+      "category": "Physics",
+      "code": "OnTriggerExit2D",
+      "name": {
+        "ja": "2D の物体が範囲から出たとき",
+        "en": "On Trigger Exit 2D"
+      },
+      "description": {
+        "ja": "2D のコライダーが、この 2D の範囲から出たとき。",
+        "en": "A 2D collider leaves this 2D trigger."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "出ていった物",
+            "en": "What left"
+          },
+          "type": {
+            "ja": "Collider2D",
+            "en": "Collider2D"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnTriggerExit2D(Collider2D other)",
+      "needs": []
+    },
+    {
+      "id": "OnTriggerStay2D",
+      "category": "Physics",
+      "code": "OnTriggerStay2D",
+      "name": {
+        "ja": "2D の物体が範囲にいる間",
+        "en": "On Trigger Stay 2D"
+      },
+      "description": {
+        "ja": "2D のコライダーが範囲の中にいる間、物理演算のたびに（ふつう 1 秒に 50 回）。",
+        "en": "Every physics step while a 2D collider stays in this 2D trigger."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "中にいる物",
+            "en": "What is inside"
+          },
+          "type": {
+            "ja": "Collider2D",
+            "en": "Collider2D"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnTriggerStay2D(Collider2D other)",
+      "needs": []
+    },
+    {
+      "id": "OnCollisionEnter2D",
+      "category": "Physics",
+      "code": "OnCollisionEnter2D",
+      "name": {
+        "ja": "2D の物体がぶつかったとき",
+        "en": "On Collision Enter 2D"
+      },
+      "description": {
+        "ja": "2D のコライダーがこのオブジェクトにぶつかったとき。",
+        "en": "A 2D collider hits this one."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "ぶつかった相手",
+            "en": "What hit it"
+          },
+          "type": {
+            "ja": "Collision2D",
+            "en": "Collision2D"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnCollisionEnter2D(Collision2D other)",
+      "needs": []
+    },
+    {
+      "id": "OnCollisionExit2D",
+      "category": "Physics",
+      "code": "OnCollisionExit2D",
+      "name": {
+        "ja": "2D の物体が離れたとき",
+        "en": "On Collision Exit 2D"
+      },
+      "description": {
+        "ja": "ぶつかっていた 2D のコライダーが離れたとき。",
+        "en": "A 2D collider stops touching this one."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "離れた相手",
+            "en": "What left it"
+          },
+          "type": {
+            "ja": "Collision2D",
+            "en": "Collision2D"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnCollisionExit2D(Collision2D other)",
+      "needs": []
+    },
+    {
+      "id": "OnCollisionStay2D",
+      "category": "Physics",
+      "code": "OnCollisionStay2D",
+      "name": {
+        "ja": "2D の物体が触れている間",
+        "en": "On Collision Stay 2D"
+      },
+      "description": {
+        "ja": "2D のコライダーが触れている間、物理演算のたびに（ふつう 1 秒に 50 回）。",
+        "en": "Every physics step while a 2D collider touches this one."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "触れている相手",
+            "en": "What touches it"
+          },
+          "type": {
+            "ja": "Collision2D",
+            "en": "Collision2D"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnCollisionStay2D(Collision2D other)",
+      "needs": []
+    },
+    {
+      "id": "OnControllerColliderHit",
+      "category": "Physics",
+      "code": "OnControllerColliderHit",
+      "name": {
+        "ja": "キャラクターコントローラーがぶつかったとき",
+        "en": "On Controller Collider Hit"
+      },
+      "description": {
+        "ja": "このオブジェクトの CharacterController が、動いている途中でコライダーにぶつかったとき。",
+        "en": "This object's CharacterController hits a collider while moving."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "ぶつかった情報",
+            "en": "The hit"
+          },
+          "type": {
+            "ja": "ControllerColliderHit",
+            "en": "ControllerColliderHit"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnControllerColliderHit(ControllerColliderHit hit)",
+      "needs": []
+    },
+    {
+      "id": "OnParticleCollision",
+      "category": "Physics",
+      "code": "OnParticleCollision",
+      "name": {
+        "ja": "パーティクルが当たったとき",
+        "en": "On Particle Collision"
+      },
+      "description": {
+        "ja": "パーティクルがこのオブジェクトに当たったとき（またはこのパーティクルが何かに当たったとき）。",
+        "en": "A particle hits this object, or this particle system's particle hits another object."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "相手のオブジェクト",
+            "en": "The other object"
+          },
+          "type": {
+            "ja": "オブジェクト",
+            "en": "Object"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnParticleCollision(GameObject other)",
+      "needs": []
+    },
+    {
+      "id": "OnParticleTrigger",
+      "category": "Physics",
+      "code": "OnParticleTrigger",
+      "name": {
+        "ja": "パーティクルがトリガーに触れたとき",
+        "en": "On Particle Trigger"
+      },
+      "description": {
+        "ja": "このパーティクルシステムの Triggers モジュールの条件を満たしたとき。",
+        "en": "Particles meet this particle system's Triggers module conditions."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnParticleTrigger()",
+      "needs": []
+    },
+    {
+      "id": "OnJointBreak",
+      "category": "Physics",
+      "code": "OnJointBreak",
+      "name": {
+        "ja": "ジョイントが外れたとき",
+        "en": "On Joint Break"
+      },
+      "description": {
+        "ja": "このオブジェクトのジョイントが外れたとき。外れた力を「イベントの値」として使えます。",
+        "en": "A joint on this object breaks; the force is the event's value."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "外れた力",
+            "en": "Break force"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnJointBreak(float force)",
+      "needs": []
+    },
+    {
+      "id": "OnJointBreak2D",
+      "category": "Physics",
+      "code": "OnJointBreak2D",
+      "name": {
+        "ja": "2D のジョイントが外れたとき",
+        "en": "On Joint Break 2D"
+      },
+      "description": {
+        "ja": "このオブジェクトの 2D ジョイントが外れたとき。",
+        "en": "A 2D joint on this object breaks."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "外れたジョイント",
+            "en": "The joint"
+          },
+          "type": {
+            "ja": "Joint2D",
+            "en": "Joint2D"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnJointBreak2D(Joint2D joint)",
+      "needs": []
+    },
+    {
+      "id": "OnTransformParentChanged",
+      "category": "Physics",
+      "code": "OnTransformParentChanged",
+      "name": {
+        "ja": "親が変わったとき",
+        "en": "On Parent Changed"
+      },
+      "description": {
+        "ja": "このオブジェクトの親（ヒエラルキー上の親）が変わったとき。",
+        "en": "This object's parent changes."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnTransformParentChanged()",
+      "needs": []
+    },
+    {
+      "id": "OnTransformChildrenChanged",
+      "category": "Physics",
+      "code": "OnTransformChildrenChanged",
+      "name": {
+        "ja": "子が増えた・減ったとき",
+        "en": "On Children Changed"
+      },
+      "description": {
+        "ja": "このオブジェクトの子が増えたり減ったりしたとき。",
+        "en": "A child is added to or removed from this object."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnTransformChildrenChanged()",
+      "needs": []
+    },
+    {
+      "id": "OnAvatarChanged",
+      "category": "Avatar",
+      "code": "OnAvatarChanged",
+      "name": {
+        "ja": "アバターを変えたとき",
+        "en": "On Avatar Changed"
+      },
+      "description": {
+        "ja": "プレイヤーがアバターを変えたとき。",
+        "en": "A player changes avatar."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnAvatarChanged(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnAvatarEyeHeightChanged",
+      "category": "Avatar",
+      "code": "OnAvatarEyeHeightChanged",
+      "name": {
+        "ja": "アバターの身長が変わったとき",
+        "en": "On Avatar Eye Height Changed"
+      },
+      "description": {
+        "ja": "プレイヤーのアバターの目の高さが変わったとき。前の高さ（メートル）を「イベントの値」として使えます。",
+        "en": "A player's avatar height changes; the old height is the event's value."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        },
+        {
+          "name": {
+            "ja": "前の目の高さ",
+            "en": "Previous eye height"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnAvatarEyeHeightChanged(VRCPlayerApi player, float prevEyeHeightAsMeters)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerSuspendChanged",
+      "category": "Avatar",
+      "code": "OnPlayerSuspendChanged",
+      "name": {
+        "ja": "プレイヤーのアプリが中断・再開したとき",
+        "en": "On Player Suspend Changed"
+      },
+      "description": {
+        "ja": "プレイヤーのアプリが一時停止したり再開したりしたとき（スマートフォンなど）。",
+        "en": "A player's app is suspended or resumed (mobile)."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerSuspendChanged(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnContactEnter",
+      "category": "Avatar",
+      "code": "OnContactEnter",
+      "name": {
+        "ja": "コンタクトが触れたとき",
+        "en": "On Contact Enter"
+      },
+      "description": {
+        "ja": "このオブジェクトの VRC Contact Receiver に、コンタクト（手など）が触れたとき。",
+        "en": "A contact sender touches a VRC Contact Receiver on this object."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "コンタクトの情報",
+            "en": "The contact"
+          },
+          "type": {
+            "ja": "ContactEnterInfo",
+            "en": "ContactEnterInfo"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnContactEnter(ContactEnterInfo contactInfo)",
+      "needs": []
+    },
+    {
+      "id": "OnContactExit",
+      "category": "Avatar",
+      "code": "OnContactExit",
+      "name": {
+        "ja": "コンタクトが離れたとき",
+        "en": "On Contact Exit"
+      },
+      "description": {
+        "ja": "このオブジェクトの VRC Contact Receiver から、コンタクトが離れたとき。",
+        "en": "A contact sender stops touching a VRC Contact Receiver on this object."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "コンタクトの情報",
+            "en": "The contact"
+          },
+          "type": {
+            "ja": "ContactExitInfo",
+            "en": "ContactExitInfo"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnContactExit(ContactExitInfo contactInfo)",
+      "needs": []
+    },
+    {
+      "id": "OnPhysBoneGrabbed",
+      "category": "Avatar",
+      "code": "OnPhysBoneGrabbed",
+      "name": {
+        "ja": "PhysBone をつかんだとき",
+        "en": "On PhysBone Grabbed"
+      },
+      "description": {
+        "ja": "このオブジェクトの PhysBone がつかまれたとき。",
+        "en": "A PhysBone on this object is grabbed."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "PhysBone の情報",
+            "en": "The PhysBone"
+          },
+          "type": {
+            "ja": "PhysBoneGrabbedInfo",
+            "en": "PhysBoneGrabbedInfo"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPhysBoneGrabbed(PhysBoneGrabbedInfo physBoneInfo)",
+      "needs": []
+    },
+    {
+      "id": "OnPhysBoneReleased",
+      "category": "Avatar",
+      "code": "OnPhysBoneReleased",
+      "name": {
+        "ja": "PhysBone を離したとき",
+        "en": "On PhysBone Released"
+      },
+      "description": {
+        "ja": "つかまれていた PhysBone が離されたとき。",
+        "en": "A grabbed PhysBone on this object is released."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "PhysBone の情報",
+            "en": "The PhysBone"
+          },
+          "type": {
+            "ja": "PhysBoneReleasedInfo",
+            "en": "PhysBoneReleasedInfo"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPhysBoneReleased(PhysBoneReleasedInfo physBoneInfo)",
+      "needs": []
+    },
+    {
+      "id": "OnPhysBonePosed",
+      "category": "Avatar",
+      "code": "OnPhysBonePosed",
+      "name": {
+        "ja": "PhysBone がポーズされたとき",
+        "en": "On PhysBone Posed"
+      },
+      "description": {
+        "ja": "このオブジェクトの PhysBone がポーズ（その形で固定）されたとき。",
+        "en": "A PhysBone on this object is posed (left in place)."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "PhysBone の情報",
+            "en": "The PhysBone"
+          },
+          "type": {
+            "ja": "PhysBonePosedInfo",
+            "en": "PhysBonePosedInfo"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPhysBonePosed(PhysBonePosedInfo physBoneInfo)",
+      "needs": []
+    },
+    {
+      "id": "OnPhysBoneUnPosed",
+      "category": "Avatar",
+      "code": "OnPhysBoneUnPosed",
+      "name": {
+        "ja": "PhysBone のポーズが解けたとき",
+        "en": "On PhysBone Unposed"
+      },
+      "description": {
+        "ja": "ポーズされていた PhysBone が元に戻されたとき。",
+        "en": "A posed PhysBone on this object is let go."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "PhysBone の情報",
+            "en": "The PhysBone"
+          },
+          "type": {
+            "ja": "PhysBoneUnPosedInfo",
+            "en": "PhysBoneUnPosedInfo"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPhysBoneUnPosed(PhysBoneUnPosedInfo physBoneInfo)",
+      "needs": []
+    },
+    {
+      "id": "OnDroneTriggerEnter",
+      "category": "Avatar",
+      "code": "OnDroneTriggerEnter",
+      "name": {
+        "ja": "ドローンが範囲に入ったとき",
+        "en": "On Drone Trigger Enter"
+      },
+      "description": {
+        "ja": "プレイヤーのドローン（カメラドローン）が、このオブジェクトの範囲に入ったとき。",
+        "en": "A player's drone (camera drone) enters this trigger."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "ドローン",
+            "en": "The drone"
+          },
+          "type": {
+            "ja": "VRCDroneApi",
+            "en": "VRCDroneApi"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnDroneTriggerEnter(VRCDroneApi drone)",
+      "needs": [
+        "Area"
+      ]
+    },
+    {
+      "id": "OnDroneTriggerExit",
+      "category": "Avatar",
+      "code": "OnDroneTriggerExit",
+      "name": {
+        "ja": "ドローンが範囲から出たとき",
+        "en": "On Drone Trigger Exit"
+      },
+      "description": {
+        "ja": "ドローンが、このオブジェクトの範囲から出たとき。",
+        "en": "A drone leaves this trigger."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "ドローン",
+            "en": "The drone"
+          },
+          "type": {
+            "ja": "VRCDroneApi",
+            "en": "VRCDroneApi"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnDroneTriggerExit(VRCDroneApi drone)",
+      "needs": [
+        "Area"
+      ]
+    },
+    {
+      "id": "OnDroneTriggerStay",
+      "category": "Avatar",
+      "code": "OnDroneTriggerStay",
+      "name": {
+        "ja": "ドローンが範囲にいる間",
+        "en": "On Drone Trigger Stay"
+      },
+      "description": {
+        "ja": "ドローンが範囲の中にいる間、物理演算のたびに（ふつう 1 秒に 50 回）。",
+        "en": "Every physics step while a drone stays in this trigger."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "ドローン",
+            "en": "The drone"
+          },
+          "type": {
+            "ja": "VRCDroneApi",
+            "en": "VRCDroneApi"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "public override void OnDroneTriggerStay(VRCDroneApi drone)",
+      "needs": [
+        "Area"
+      ]
+    },
+    {
+      "id": "InputJump",
+      "category": "Input",
+      "code": "InputJump",
+      "name": {
+        "ja": "ジャンプボタンを押した・離したとき",
+        "en": "Input Jump"
+      },
+      "description": {
+        "ja": "自分がジャンプボタンを押した・離したとき。押しているかを「イベントの値」として使えます。",
+        "en": "The local player presses or releases Jump; pressed is the event's value."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "押しているか",
+            "en": "Pressed"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          }
+        },
+        {
+          "name": {
+            "ja": "入力の詳細",
+            "en": "Input details"
+          },
+          "type": {
+            "ja": "UdonInputEventArgs",
+            "en": "UdonInputEventArgs"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void InputJump(bool value, UdonInputEventArgs args)",
+      "needs": []
+    },
+    {
+      "id": "InputUse",
+      "category": "Input",
+      "code": "InputUse",
+      "name": {
+        "ja": "Use ボタンを押した・離したとき",
+        "en": "Input Use"
+      },
+      "description": {
+        "ja": "自分が Use（トリガー）ボタンを押した・離したとき。押しているかを「イベントの値」として使えます。",
+        "en": "The local player presses or releases Use."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "押しているか",
+            "en": "Pressed"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          }
+        },
+        {
+          "name": {
+            "ja": "入力の詳細",
+            "en": "Input details"
+          },
+          "type": {
+            "ja": "UdonInputEventArgs",
+            "en": "UdonInputEventArgs"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void InputUse(bool value, UdonInputEventArgs args)",
+      "needs": []
+    },
+    {
+      "id": "InputGrab",
+      "category": "Input",
+      "code": "InputGrab",
+      "name": {
+        "ja": "つかむボタンを押した・離したとき",
+        "en": "Input Grab"
+      },
+      "description": {
+        "ja": "自分がつかむ（Grab）ボタンを押した・離したとき。",
+        "en": "The local player presses or releases Grab."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "押しているか",
+            "en": "Pressed"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          }
+        },
+        {
+          "name": {
+            "ja": "入力の詳細",
+            "en": "Input details"
+          },
+          "type": {
+            "ja": "UdonInputEventArgs",
+            "en": "UdonInputEventArgs"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void InputGrab(bool value, UdonInputEventArgs args)",
+      "needs": []
+    },
+    {
+      "id": "InputDrop",
+      "category": "Input",
+      "code": "InputDrop",
+      "name": {
+        "ja": "離すボタンを押した・離したとき",
+        "en": "Input Drop"
+      },
+      "description": {
+        "ja": "自分が離す（Drop）ボタンを押した・離したとき。",
+        "en": "The local player presses or releases Drop."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "押しているか",
+            "en": "Pressed"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          }
+        },
+        {
+          "name": {
+            "ja": "入力の詳細",
+            "en": "Input details"
+          },
+          "type": {
+            "ja": "UdonInputEventArgs",
+            "en": "UdonInputEventArgs"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void InputDrop(bool value, UdonInputEventArgs args)",
+      "needs": []
+    },
+    {
+      "id": "InputMoveHorizontal",
+      "category": "Input",
+      "code": "InputMoveHorizontal",
+      "name": {
+        "ja": "左右の移動入力が変わったとき",
+        "en": "Input Move Horizontal"
+      },
+      "description": {
+        "ja": "自分の左右の移動入力が変わったとき（-1〜1）。",
+        "en": "The local player's left/right move input changes (-1 to 1)."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "入力の量（-1〜1）",
+            "en": "How far (-1 to 1)"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          }
+        },
+        {
+          "name": {
+            "ja": "入力の詳細",
+            "en": "Input details"
+          },
+          "type": {
+            "ja": "UdonInputEventArgs",
+            "en": "UdonInputEventArgs"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "public override void InputMoveHorizontal(float value, UdonInputEventArgs args)",
+      "needs": []
+    },
+    {
+      "id": "InputMoveVertical",
+      "category": "Input",
+      "code": "InputMoveVertical",
+      "name": {
+        "ja": "前後の移動入力が変わったとき",
+        "en": "Input Move Vertical"
+      },
+      "description": {
+        "ja": "自分の前後の移動入力が変わったとき（-1〜1）。",
+        "en": "The local player's forward/back move input changes (-1 to 1)."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "入力の量（-1〜1）",
+            "en": "How far (-1 to 1)"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          }
+        },
+        {
+          "name": {
+            "ja": "入力の詳細",
+            "en": "Input details"
+          },
+          "type": {
+            "ja": "UdonInputEventArgs",
+            "en": "UdonInputEventArgs"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "public override void InputMoveVertical(float value, UdonInputEventArgs args)",
+      "needs": []
+    },
+    {
+      "id": "InputLookHorizontal",
+      "category": "Input",
+      "code": "InputLookHorizontal",
+      "name": {
+        "ja": "左右の視点入力が変わったとき",
+        "en": "Input Look Horizontal"
+      },
+      "description": {
+        "ja": "自分の左右の視点入力が変わったとき。",
+        "en": "The local player's left/right look input changes."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "入力の量（-1〜1）",
+            "en": "How far (-1 to 1)"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          }
+        },
+        {
+          "name": {
+            "ja": "入力の詳細",
+            "en": "Input details"
+          },
+          "type": {
+            "ja": "UdonInputEventArgs",
+            "en": "UdonInputEventArgs"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "public override void InputLookHorizontal(float value, UdonInputEventArgs args)",
+      "needs": []
+    },
+    {
+      "id": "InputLookVertical",
+      "category": "Input",
+      "code": "InputLookVertical",
+      "name": {
+        "ja": "上下の視点入力が変わったとき",
+        "en": "Input Look Vertical"
+      },
+      "description": {
+        "ja": "自分の上下の視点入力が変わったとき。",
+        "en": "The local player's up/down look input changes."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "入力の量（-1〜1）",
+            "en": "How far (-1 to 1)"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          }
+        },
+        {
+          "name": {
+            "ja": "入力の詳細",
+            "en": "Input details"
+          },
+          "type": {
+            "ja": "UdonInputEventArgs",
+            "en": "UdonInputEventArgs"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "public override void InputLookVertical(float value, UdonInputEventArgs args)",
+      "needs": []
+    },
+    {
+      "id": "OnInputMethodChanged",
+      "category": "Input",
+      "code": "OnInputMethodChanged",
+      "name": {
+        "ja": "入力方法が変わったとき",
+        "en": "On Input Method Changed"
+      },
+      "description": {
+        "ja": "自分の入力方法（キーボード、コントローラー、タッチなど）が変わったとき。",
+        "en": "The local player switches input (keyboard, controller, touch...)."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "入力方法",
+            "en": "Input method"
+          },
+          "type": {
+            "ja": "VRCInputMethod",
+            "en": "VRCInputMethod"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnInputMethodChanged(VRCInputMethod inputMethod)",
+      "needs": []
+    },
+    {
+      "id": "OnLanguageChanged",
+      "category": "Input",
+      "code": "OnLanguageChanged",
+      "name": {
+        "ja": "表示言語が変わったとき",
+        "en": "On Language Changed"
+      },
+      "description": {
+        "ja": "ワールドに入ったときと、自分が VRChat の表示言語を変えたとき。言語コードを「イベントの値」として使えます。",
+        "en": "When joining, and when the local player changes VRChat's language; the language code is the event's value."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "言語コード",
+            "en": "Language code"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnLanguageChanged(string language)",
+      "needs": []
+    },
+    {
+      "id": "MidiNoteOn",
+      "category": "Input",
+      "code": "MidiNoteOn",
+      "name": {
+        "ja": "MIDI の鍵盤を押したとき",
+        "en": "MIDI Note On"
+      },
+      "description": {
+        "ja": "MIDI の鍵盤が押されたとき（チャンネル、音の番号、強さ）。",
+        "en": "A MIDI key is pressed (channel, note number, velocity)."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "チャンネル",
+            "en": "Channel"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        },
+        {
+          "name": {
+            "ja": "番号",
+            "en": "Note / control number"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        },
+        {
+          "name": {
+            "ja": "強さ",
+            "en": "Velocity"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void MidiNoteOn(int channel, int number, int velocity)",
+      "needs": []
+    },
+    {
+      "id": "MidiNoteOff",
+      "category": "Input",
+      "code": "MidiNoteOff",
+      "name": {
+        "ja": "MIDI の鍵盤を離したとき",
+        "en": "MIDI Note Off"
+      },
+      "description": {
+        "ja": "MIDI の鍵盤が離されたとき。",
+        "en": "A MIDI key is released."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "チャンネル",
+            "en": "Channel"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        },
+        {
+          "name": {
+            "ja": "番号",
+            "en": "Note / control number"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        },
+        {
+          "name": {
+            "ja": "強さ",
+            "en": "Velocity"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void MidiNoteOff(int channel, int number, int velocity)",
+      "needs": []
+    },
+    {
+      "id": "MidiControlChange",
+      "category": "Input",
+      "code": "MidiControlChange",
+      "name": {
+        "ja": "MIDI のつまみを動かしたとき",
+        "en": "MIDI Control Change"
+      },
+      "description": {
+        "ja": "MIDI のつまみやスライダーが動いたとき（チャンネル、番号、値）。",
+        "en": "A MIDI knob or slider moves (channel, control number, value)."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "チャンネル",
+            "en": "Channel"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        },
+        {
+          "name": {
+            "ja": "番号",
+            "en": "Note / control number"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        },
+        {
+          "name": {
+            "ja": "イベントの値",
+            "en": "The event's value"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void MidiControlChange(int channel, int number, int value)",
+      "needs": []
+    },
+    {
+      "id": "UiButtonClick",
+      "category": "UI",
+      "code": "Button.onClick",
+      "name": {
+        "ja": "ボタンが押されたとき",
+        "en": "UI Button Pressed"
+      },
+      "description": {
+        "ja": "UI のボタンが押されたとき。ボタンへの配線は Tripwire が自動で行います。",
+        "en": "A UI Button is pressed. Tripwire wires its OnClick for you."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": null,
+      "needs": [
+        "UiComponent"
+      ]
+    },
+    {
+      "id": "UiToggleChanged",
+      "category": "UI",
+      "code": "Toggle.onValueChanged",
+      "name": {
+        "ja": "トグルが切り替わったとき",
+        "en": "UI Toggle Changed"
+      },
+      "description": {
+        "ja": "UI のトグルが切り替わったとき。オン/オフを「イベントの値」として使えます。",
+        "en": "A UI Toggle is switched; its on/off state is the event's value."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "イベントの値",
+            "en": "The event's value"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": null,
+      "needs": [
+        "UiComponent"
+      ]
+    },
+    {
+      "id": "UiSliderChanged",
+      "category": "UI",
+      "code": "Slider.onValueChanged",
+      "name": {
+        "ja": "スライダーが動いたとき",
+        "en": "UI Slider Moved"
+      },
+      "description": {
+        "ja": "UI のスライダーが動いたとき。位置（数値）を「イベントの値」として使えます。",
+        "en": "A UI Slider is moved; its value is the event's value."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "イベントの値",
+            "en": "The event's value"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": null,
+      "needs": [
+        "UiComponent"
+      ]
+    },
+    {
+      "id": "OnVideoReady",
+      "category": "Video",
+      "code": "OnVideoReady",
+      "name": {
+        "ja": "動画の準備ができたとき",
+        "en": "On Video Ready"
+      },
+      "description": {
+        "ja": "この動画プレイヤーで動画の読み込みが終わったとき。",
+        "en": "The video on this object's video player is loaded and ready."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVideoReady()",
+      "needs": [
+        "VideoPlayer"
+      ]
+    },
+    {
+      "id": "OnVideoStart",
+      "category": "Video",
+      "code": "OnVideoStart",
+      "name": {
+        "ja": "動画が始まったとき",
+        "en": "On Video Start"
+      },
+      "description": {
+        "ja": "動画の再生が始まったとき。",
+        "en": "The video starts playing."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVideoStart()",
+      "needs": [
+        "VideoPlayer"
+      ]
+    },
+    {
+      "id": "OnVideoEnd",
+      "category": "Video",
+      "code": "OnVideoEnd",
+      "name": {
+        "ja": "動画が終わったとき",
+        "en": "On Video End"
+      },
+      "description": {
+        "ja": "動画の再生が終わったとき。最後まで再生したときと、操作で終えたときの両方です。",
+        "en": "The video finishes playing: it reached its end, or a player ended it."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVideoEnd()",
+      "needs": [
+        "VideoPlayer"
+      ]
+    },
+    {
+      "id": "OnVideoLoop",
+      "category": "Video",
+      "code": "OnVideoLoop",
+      "name": {
+        "ja": "動画がループしたとき",
+        "en": "On Video Loop"
+      },
+      "description": {
+        "ja": "ループ再生で動画が最初に戻ったとき。",
+        "en": "A looping video starts over."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVideoLoop()",
+      "needs": [
+        "VideoPlayer"
+      ]
+    },
+    {
+      "id": "OnVideoError",
+      "category": "Video",
+      "code": "OnVideoError",
+      "name": {
+        "ja": "動画でエラーが起きたとき",
+        "en": "On Video Error"
+      },
+      "description": {
+        "ja": "動画の読み込みや再生に失敗したとき。エラーの種類を「イベントの値」として使えます。",
+        "en": "The video failed to load or play; the error kind is the event's value."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "エラーの種類",
+            "en": "Error kind"
+          },
+          "type": {
+            "ja": "VideoError",
+            "en": "VideoError"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVideoError(VideoError videoError)",
+      "needs": [
+        "VideoPlayer"
+      ]
+    },
+    {
+      "id": "OnVideoPlay",
+      "category": "Video",
+      "code": "OnVideoPlay",
+      "name": {
+        "ja": "動画が再生されたとき",
+        "en": "On Video Play"
+      },
+      "description": {
+        "ja": "動画が再生（一時停止からの再開を含む）されたとき。",
+        "en": "The video resumes or starts playing."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVideoPlay()",
+      "needs": [
+        "VideoPlayer"
+      ]
+    },
+    {
+      "id": "OnVideoPause",
+      "category": "Video",
+      "code": "OnVideoPause",
+      "name": {
+        "ja": "動画が一時停止したとき",
+        "en": "On Video Pause"
+      },
+      "description": {
+        "ja": "動画が一時停止されたとき。",
+        "en": "The video is paused."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVideoPause()",
+      "needs": [
+        "VideoPlayer"
+      ]
+    },
+    {
+      "id": "OnOwnershipTransferred",
+      "category": "Network",
+      "code": "OnOwnershipTransferred",
+      "name": {
+        "ja": "オーナーが変わったとき",
+        "en": "On Ownership Transferred"
+      },
+      "description": {
+        "ja": "このオブジェクトのオーナーが別のプレイヤーに移ったとき。",
+        "en": "Ownership of this object moves to a player."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnOwnershipTransferred(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnDeserialization",
+      "category": "Network",
+      "code": "OnDeserialization",
+      "name": {
+        "ja": "同期データを受け取ったとき",
+        "en": "On Deserialization"
+      },
+      "description": {
+        "ja": "オーナーから同期した変数が届いたとき（あとから来たときも届きます）。",
+        "en": "Synced variables arrive from the owner (also for late joiners)."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnDeserialization()",
+      "needs": []
+    },
+    {
+      "id": "OnPreSerialization",
+      "category": "Network",
+      "code": "OnPreSerialization",
+      "name": {
+        "ja": "同期データを送る直前",
+        "en": "On Pre Serialization"
+      },
+      "description": {
+        "ja": "このオブジェクトの同期した変数を送る直前（オーナーのみ）。",
+        "en": "Just before this object's synced variables are sent."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPreSerialization()",
+      "needs": []
+    },
+    {
+      "id": "OnPostSerialization",
+      "category": "Network",
+      "code": "OnPostSerialization",
+      "name": {
+        "ja": "同期データを送った後",
+        "en": "On Post Serialization"
+      },
+      "description": {
+        "ja": "同期した変数を送った後（オーナーのみ）。結果を「イベントの値」として使えます。",
+        "en": "After this object's synced variables were sent; the result is the event's value."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "結果",
+            "en": "The result"
+          },
+          "type": {
+            "ja": "SerializationResult",
+            "en": "SerializationResult"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPostSerialization(SerializationResult result)",
+      "needs": []
+    },
+    {
+      "id": "OnMasterTransferred",
+      "category": "Network",
+      "code": "OnMasterTransferred",
+      "name": {
+        "ja": "マスターが変わったとき",
+        "en": "On Master Transferred"
+      },
+      "description": {
+        "ja": "インスタンスのマスターが別のプレイヤーに移ったとき。",
+        "en": "The instance master changes."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "新しいマスター",
+            "en": "The new master"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnMasterTransferred(VRCPlayerApi newMaster)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerRestored",
+      "category": "Network",
+      "code": "OnPlayerRestored",
+      "name": {
+        "ja": "プレイヤーの保存データが読み込まれたとき",
+        "en": "On Player Restored"
+      },
+      "description": {
+        "ja": "プレイヤーの保存データ（Persistence）が読み込まれたとき。",
+        "en": "A player's saved data (persistence) has been loaded."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerRestored(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerDataUpdated",
+      "category": "Network",
+      "code": "OnPlayerDataUpdated",
+      "name": {
+        "ja": "プレイヤーの保存データが変わったとき",
+        "en": "On Player Data Updated"
+      },
+      "description": {
+        "ja": "プレイヤーの保存データ（PlayerData）が変わったとき。",
+        "en": "A player's saved data (PlayerData) changes."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        },
+        {
+          "name": {
+            "ja": "変わった項目",
+            "en": "Changed entries"
+          },
+          "type": {
+            "ja": "Info[]",
+            "en": "Info[]"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerDataUpdated(VRCPlayerApi player, Info[] infos)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerDataStorageWarning",
+      "category": "Network",
+      "code": "OnPlayerDataStorageWarning",
+      "name": {
+        "ja": "保存データ（PlayerData）が上限に近いとき",
+        "en": "On Player Data Storage Warning"
+      },
+      "description": {
+        "ja": "プレイヤーの PlayerData が容量の上限に近づいたとき。",
+        "en": "A player's PlayerData is close to its size limit."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerDataStorageWarning(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerDataStorageExceeded",
+      "category": "Network",
+      "code": "OnPlayerDataStorageExceeded",
+      "name": {
+        "ja": "保存データ（PlayerData）が上限を超えたとき",
+        "en": "On Player Data Storage Exceeded"
+      },
+      "description": {
+        "ja": "プレイヤーの PlayerData が容量の上限を超えたとき。",
+        "en": "A player's PlayerData is over its size limit."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerDataStorageExceeded(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerObjectStorageWarning",
+      "category": "Network",
+      "code": "OnPlayerObjectStorageWarning",
+      "name": {
+        "ja": "保存オブジェクトが上限に近いとき",
+        "en": "On Player Object Storage Warning"
+      },
+      "description": {
+        "ja": "プレイヤーの保存オブジェクト（PlayerObject）が容量の上限に近づいたとき。",
+        "en": "A player's persistent objects are close to their size limit."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerObjectStorageWarning(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPlayerObjectStorageExceeded",
+      "category": "Network",
+      "code": "OnPlayerObjectStorageExceeded",
+      "name": {
+        "ja": "保存オブジェクトが上限を超えたとき",
+        "en": "On Player Object Storage Exceeded"
+      },
+      "description": {
+        "ja": "プレイヤーの保存オブジェクトが容量の上限を超えたとき。",
+        "en": "A player's persistent objects are over their size limit."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPlayerObjectStorageExceeded(VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPersistenceUsageUpdated",
+      "category": "Network",
+      "code": "OnPersistenceUsageUpdated",
+      "name": {
+        "ja": "保存データの使用量が更新されたとき",
+        "en": "On Persistence Usage Updated"
+      },
+      "description": {
+        "ja": "保存データの使用量の情報が更新されたとき。",
+        "en": "The amount of saved data in use is updated."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPersistenceUsageUpdated()",
+      "needs": []
+    },
+    {
+      "id": "OnSpawn",
+      "category": "Network",
+      "code": "OnSpawn",
+      "name": {
+        "ja": "オブジェクトプールから取り出されたとき",
+        "en": "On Spawn"
+      },
+      "description": {
+        "ja": "このオブジェクトが VRC Object Pool から取り出されたとき。VRChat では非推奨で、代わりに「オブジェクトが有効になったとき」を使います。",
+        "en": "This object was spawned from a VRC Object Pool. Deprecated by VRChat: use On Enable instead."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnSpawn()",
+      "needs": []
+    },
+    {
+      "id": "Update",
+      "category": "Frame",
+      "code": "Update",
+      "name": {
+        "ja": "毎フレーム",
+        "en": "Update"
+      },
+      "description": {
+        "ja": "毎フレーム実行します（重い処理は入れないでください）。",
+        "en": "Every frame (keep the actions light)."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void Update()",
+      "needs": []
+    },
+    {
+      "id": "LateUpdate",
+      "category": "Frame",
+      "code": "LateUpdate",
+      "name": {
+        "ja": "毎フレーム（Update の後）",
+        "en": "Late Update"
+      },
+      "description": {
+        "ja": "毎フレーム、すべての Update が終わった後に実行します。",
+        "en": "Every frame, after every Update."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void LateUpdate()",
+      "needs": []
+    },
+    {
+      "id": "FixedUpdate",
+      "category": "Frame",
+      "code": "FixedUpdate",
+      "name": {
+        "ja": "物理演算のたびに",
+        "en": "Fixed Update"
+      },
+      "description": {
+        "ja": "物理演算のたびに（ふつう 1 秒に 50 回）実行します。重い処理は入れないでください。",
+        "en": "Every physics step (keep the actions light)."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void FixedUpdate()",
+      "needs": []
+    },
+    {
+      "id": "PostLateUpdate",
+      "category": "Frame",
+      "code": "PostLateUpdate",
+      "name": {
+        "ja": "毎フレーム（プレイヤーが動いた後）",
+        "en": "Post Late Update"
+      },
+      "description": {
+        "ja": "毎フレーム、VRChat がプレイヤーの位置を更新した後に実行します（ボーンに追従させるときなど）。",
+        "en": "Every frame, after VRChat has moved the players (for following a player's bones)."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "public override void PostLateUpdate()",
+      "needs": []
+    },
+    {
+      "id": "OnBecameVisible",
+      "category": "Frame",
+      "code": "OnBecameVisible",
+      "name": {
+        "ja": "画面に映ったとき",
+        "en": "On Became Visible"
+      },
+      "description": {
+        "ja": "このオブジェクトのレンダラーが、どれかのカメラに映るようになったとき。",
+        "en": "This object's renderer comes into view of any camera."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnBecameVisible()",
+      "needs": []
+    },
+    {
+      "id": "OnBecameInvisible",
+      "category": "Frame",
+      "code": "OnBecameInvisible",
+      "name": {
+        "ja": "画面から消えたとき",
+        "en": "On Became Invisible"
+      },
+      "description": {
+        "ja": "このオブジェクトのレンダラーが、どのカメラにも映らなくなったとき。",
+        "en": "This object's renderer is no longer seen by any camera."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnBecameInvisible()",
+      "needs": []
+    },
+    {
+      "id": "OnWillRenderObject",
+      "category": "Frame",
+      "code": "OnWillRenderObject",
+      "name": {
+        "ja": "描画される直前",
+        "en": "On Will Render Object"
+      },
+      "description": {
+        "ja": "カメラがこのオブジェクトを描画する直前に、カメラごとに。",
+        "en": "Each camera is about to render this object."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnWillRenderObject()",
+      "needs": []
+    },
+    {
+      "id": "OnPreCull",
+      "category": "Frame",
+      "code": "OnPreCull",
+      "name": {
+        "ja": "カメラが描画を始める前（カリング前）",
+        "en": "On Pre Cull"
+      },
+      "description": {
+        "ja": "このオブジェクトのカメラが描画の準備（カリング）を始める前。",
+        "en": "A camera on this object is about to cull the scene."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnPreCull()",
+      "needs": []
+    },
+    {
+      "id": "OnPreRender",
+      "category": "Frame",
+      "code": "OnPreRender",
+      "name": {
+        "ja": "カメラが描画する前",
+        "en": "On Pre Render"
+      },
+      "description": {
+        "ja": "このオブジェクトのカメラが描画を始める前。",
+        "en": "A camera on this object is about to render."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnPreRender()",
+      "needs": []
+    },
+    {
+      "id": "OnPostRender",
+      "category": "Frame",
+      "code": "OnPostRender",
+      "name": {
+        "ja": "カメラが描画した後",
+        "en": "On Post Render"
+      },
+      "description": {
+        "ja": "このオブジェクトのカメラが描画を終えた後。",
+        "en": "A camera on this object has rendered."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnPostRender()",
+      "needs": []
+    },
+    {
+      "id": "OnRenderObject",
+      "category": "Frame",
+      "code": "OnRenderObject",
+      "name": {
+        "ja": "シーンの描画の後",
+        "en": "On Render Object"
+      },
+      "description": {
+        "ja": "カメラがシーンを描画し終えた後。",
+        "en": "After a camera has rendered the scene."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnRenderObject()",
+      "needs": []
+    },
+    {
+      "id": "OnAnimatorMove",
+      "category": "Frame",
+      "code": "OnAnimatorMove",
+      "name": {
+        "ja": "Animator がルートモーションを計算したとき",
+        "en": "On Animator Move"
+      },
+      "description": {
+        "ja": "このオブジェクトの Animator がルートモーションを計算したとき。",
+        "en": "The Animator on this object has computed root motion."
+      },
+      "values": [],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnAnimatorMove()",
+      "needs": []
+    },
+    {
+      "id": "OnAnimatorIK",
+      "category": "Frame",
+      "code": "OnAnimatorIK",
+      "name": {
+        "ja": "Animator が IK を計算するとき",
+        "en": "On Animator IK"
+      },
+      "description": {
+        "ja": "このオブジェクトの Animator が IK を計算するとき。レイヤー番号を「イベントの値」として使えます。",
+        "en": "The Animator on this object is setting up IK; the layer is the event's value."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "レイヤー番号",
+            "en": "Layer"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        }
+      ],
+      "frequent": true,
+      "usesName": false,
+      "signature": "void OnAnimatorIK(int layerIndex)",
+      "needs": []
+    },
+    {
+      "id": "OnDestroy",
+      "category": "Frame",
+      "code": "OnDestroy",
+      "name": {
+        "ja": "オブジェクトが消されたとき",
+        "en": "On Destroy"
+      },
+      "description": {
+        "ja": "このオブジェクトが削除（Destroy）されたとき。",
+        "en": "This object is destroyed."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnDestroy()",
+      "needs": []
+    },
+    {
+      "id": "OnAsyncGpuReadbackComplete",
+      "category": "Frame",
+      "code": "OnAsyncGpuReadbackComplete",
+      "name": {
+        "ja": "GPU からの読み取りが終わったとき",
+        "en": "On GPU Readback Complete"
+      },
+      "description": {
+        "ja": "このスクリプトが頼んだ GPU からの読み取り（VRCAsyncGPUReadback）が終わったとき。",
+        "en": "A GPU readback requested by this script has finished."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "読み取り結果",
+            "en": "The readback"
+          },
+          "type": {
+            "ja": "VRCAsyncGPUReadbackRequest",
+            "en": "VRCAsyncGPUReadbackRequest"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnAsyncGpuReadbackComplete(VRCAsyncGPUReadbackRequest request)",
+      "needs": []
+    },
+    {
+      "id": "OnVRCCameraSettingsChanged",
+      "category": "Frame",
+      "code": "OnVRCCameraSettingsChanged",
+      "name": {
+        "ja": "カメラ設定が変わったとき",
+        "en": "On Camera Settings Changed"
+      },
+      "description": {
+        "ja": "プレイヤーのカメラの設定が変わったとき。",
+        "en": "The player's camera settings change."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "カメラ設定",
+            "en": "Camera settings"
+          },
+          "type": {
+            "ja": "VRCCameraSettings",
+            "en": "VRCCameraSettings"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVRCCameraSettingsChanged(VRCCameraSettings cameraSettings)",
+      "needs": []
+    },
+    {
+      "id": "OnVRCQualitySettingsChanged",
+      "category": "Frame",
+      "code": "OnVRCQualitySettingsChanged",
+      "name": {
+        "ja": "画質設定が変わったとき",
+        "en": "On Quality Settings Changed"
+      },
+      "description": {
+        "ja": "プレイヤーの画質の設定が変わったとき。",
+        "en": "The player's graphics quality settings change."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVRCQualitySettingsChanged()",
+      "needs": []
+    },
+    {
+      "id": "OnScreenUpdate",
+      "category": "Frame",
+      "code": "OnScreenUpdate",
+      "name": {
+        "ja": "画面の向きが変わったとき",
+        "en": "On Screen Update"
+      },
+      "description": {
+        "ja": "モバイル端末で、ワールドに入ったときと、画面の向きが変わったとき。",
+        "en": "On a mobile device: when entering the world, and when the screen orientation changes."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "画面の情報",
+            "en": "Screen data"
+          },
+          "type": {
+            "ja": "ScreenUpdateData",
+            "en": "ScreenUpdateData"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnScreenUpdate(ScreenUpdateData data)",
+      "needs": []
+    },
+    {
+      "id": "OnStringLoadSuccess",
+      "category": "Load",
+      "code": "OnStringLoadSuccess",
+      "name": {
+        "ja": "文字の読み込みが終わったとき",
+        "en": "On String Load Success"
+      },
+      "description": {
+        "ja": "VRCStringDownloader で頼んだ文字（Web 上のテキスト）が届いたとき。",
+        "en": "Text requested with VRCStringDownloader has arrived."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "結果",
+            "en": "The result"
+          },
+          "type": {
+            "ja": "IVRCStringDownload",
+            "en": "IVRCStringDownload"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnStringLoadSuccess(IVRCStringDownload result)",
+      "needs": []
+    },
+    {
+      "id": "OnStringLoadError",
+      "category": "Load",
+      "code": "OnStringLoadError",
+      "name": {
+        "ja": "文字の読み込みに失敗したとき",
+        "en": "On String Load Error"
+      },
+      "description": {
+        "ja": "VRCStringDownloader での読み込みに失敗したとき。",
+        "en": "Loading text with VRCStringDownloader failed."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "結果",
+            "en": "The result"
+          },
+          "type": {
+            "ja": "IVRCStringDownload",
+            "en": "IVRCStringDownload"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnStringLoadError(IVRCStringDownload result)",
+      "needs": []
+    },
+    {
+      "id": "OnImageLoadSuccess",
+      "category": "Load",
+      "code": "OnImageLoadSuccess",
+      "name": {
+        "ja": "画像の読み込みが終わったとき",
+        "en": "On Image Load Success"
+      },
+      "description": {
+        "ja": "VRCImageDownloader で頼んだ画像が届いたとき。",
+        "en": "An image requested with VRCImageDownloader has arrived."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "結果",
+            "en": "The result"
+          },
+          "type": {
+            "ja": "IVRCImageDownload",
+            "en": "IVRCImageDownload"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnImageLoadSuccess(IVRCImageDownload result)",
+      "needs": []
+    },
+    {
+      "id": "OnImageLoadError",
+      "category": "Load",
+      "code": "OnImageLoadError",
+      "name": {
+        "ja": "画像の読み込みに失敗したとき",
+        "en": "On Image Load Error"
+      },
+      "description": {
+        "ja": "VRCImageDownloader での読み込みに失敗したとき。",
+        "en": "Loading an image with VRCImageDownloader failed."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "結果",
+            "en": "The result"
+          },
+          "type": {
+            "ja": "IVRCImageDownload",
+            "en": "IVRCImageDownload"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnImageLoadError(IVRCImageDownload result)",
+      "needs": []
+    },
+    {
+      "id": "OnPurchaseConfirmed",
+      "category": "Economy",
+      "code": "OnPurchaseConfirmed",
+      "name": {
+        "ja": "購入が確認されたとき",
+        "en": "On Purchase Confirmed"
+      },
+      "description": {
+        "ja": "プレイヤーが商品を持っていることが確認されたとき（今買った場合も、前に買っていた場合も）。VRChat では非推奨で、代わりに「購入が確認されたとき（個数あり）」を使います。",
+        "en": "A player owns a product (bought now or before). Deprecated by VRChat: use On Purchase Confirmed Multiple instead."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "商品",
+            "en": "The product"
+          },
+          "type": {
+            "ja": "IProduct",
+            "en": "IProduct"
+          }
+        },
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        },
+        {
+          "name": {
+            "ja": "今買ったか",
+            "en": "Bought just now"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPurchaseConfirmed(IProduct product, VRCPlayerApi player, bool purchasedNow)",
+      "needs": []
+    },
+    {
+      "id": "OnPurchaseConfirmedMultiple",
+      "category": "Economy",
+      "code": "OnPurchaseConfirmedMultiple",
+      "name": {
+        "ja": "購入が確認されたとき（個数あり）",
+        "en": "On Purchase Confirmed (Quantity)"
+      },
+      "description": {
+        "ja": "複数買える商品について、プレイヤーが持っている個数が確認されたとき。",
+        "en": "A player owns some of a product that can be bought several times."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "商品",
+            "en": "The product"
+          },
+          "type": {
+            "ja": "IProduct",
+            "en": "IProduct"
+          }
+        },
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        },
+        {
+          "name": {
+            "ja": "今買ったか",
+            "en": "Bought just now"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          }
+        },
+        {
+          "name": {
+            "ja": "個数",
+            "en": "Quantity"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPurchaseConfirmedMultiple(IProduct product, VRCPlayerApi player, bool purchasedNow, int quantity)",
+      "needs": []
+    },
+    {
+      "id": "OnPurchaseExpired",
+      "category": "Economy",
+      "code": "OnPurchaseExpired",
+      "name": {
+        "ja": "購入の期限が切れたとき",
+        "en": "On Purchase Expired"
+      },
+      "description": {
+        "ja": "プレイヤーの商品の期限が切れたとき。",
+        "en": "A player's product has expired."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "商品",
+            "en": "The product"
+          },
+          "type": {
+            "ja": "IProduct",
+            "en": "IProduct"
+          }
+        },
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPurchaseExpired(IProduct product, VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnProductEvent",
+      "category": "Economy",
+      "code": "OnProductEvent",
+      "name": {
+        "ja": "商品のイベントが届いたとき",
+        "en": "On Product Event"
+      },
+      "description": {
+        "ja": "商品を買った人が、その商品のイベント（Store.SendProductEvent）を送ったとき。インスタンスの全員に届きます。",
+        "en": "A player who owns a product sends its event (Store.SendProductEvent); everyone in the instance gets it."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "商品",
+            "en": "The product"
+          },
+          "type": {
+            "ja": "IProduct",
+            "en": "IProduct"
+          }
+        },
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnProductEvent(IProduct product, VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnPurchasesLoaded",
+      "category": "Economy",
+      "code": "OnPurchasesLoaded",
+      "name": {
+        "ja": "購入の一覧が読み込まれたとき",
+        "en": "On Purchases Loaded"
+      },
+      "description": {
+        "ja": "プレイヤーの購入の一覧が読み込まれたとき。",
+        "en": "A player's purchases have been loaded."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "商品の一覧",
+            "en": "The products"
+          },
+          "type": {
+            "ja": "IProduct[]",
+            "en": "IProduct[]"
+          }
+        },
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnPurchasesLoaded(IProduct[] products, VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnListPurchases",
+      "category": "Economy",
+      "code": "OnListPurchases",
+      "name": {
+        "ja": "購入の一覧が届いたとき",
+        "en": "On List Purchases"
+      },
+      "description": {
+        "ja": "頼んだプレイヤーの購入の一覧が届いたとき。",
+        "en": "The list of a player's purchases has arrived."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "商品の一覧",
+            "en": "The products"
+          },
+          "type": {
+            "ja": "IProduct[]",
+            "en": "IProduct[]"
+          }
+        },
+        {
+          "name": {
+            "ja": "そのプレイヤー",
+            "en": "That player"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnListPurchases(IProduct[] products, VRCPlayerApi player)",
+      "needs": []
+    },
+    {
+      "id": "OnListAvailableProducts",
+      "category": "Economy",
+      "code": "OnListAvailableProducts",
+      "name": {
+        "ja": "商品の一覧が届いたとき",
+        "en": "On List Available Products"
+      },
+      "description": {
+        "ja": "このワールドで買える商品の一覧が届いたとき。",
+        "en": "The list of products in this world has arrived."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "商品の一覧",
+            "en": "The products"
+          },
+          "type": {
+            "ja": "IProduct[]",
+            "en": "IProduct[]"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnListAvailableProducts(IProduct[] products)",
+      "needs": []
+    },
+    {
+      "id": "OnListProductOwners",
+      "category": "Economy",
+      "code": "OnListProductOwners",
+      "name": {
+        "ja": "商品を持っている人の一覧が届いたとき",
+        "en": "On List Product Owners"
+      },
+      "description": {
+        "ja": "商品を持っているプレイヤーの一覧（名前）が届いたとき。",
+        "en": "The list of players who own a product has arrived."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "商品",
+            "en": "The product"
+          },
+          "type": {
+            "ja": "IProduct",
+            "en": "IProduct"
+          }
+        },
+        {
+          "name": {
+            "ja": "持っている人",
+            "en": "Owners"
+          },
+          "type": {
+            "ja": "文字のリスト",
+            "en": "Text list"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnListProductOwners(IProduct product, String[] owners)",
+      "needs": []
+    },
+    {
+      "id": "OnVRCPlusMassGift",
+      "category": "Economy",
+      "code": "OnVRCPlusMassGift",
+      "name": {
+        "ja": "VRC+ をまとめて贈ったとき",
+        "en": "On VRC+ Mass Gift"
+      },
+      "description": {
+        "ja": "プレイヤーが VRC+ をまとめて贈ったとき。贈った数を「イベントの値」として使えます。",
+        "en": "A player gifts VRC+ to several players."
+      },
+      "values": [
+        {
+          "name": {
+            "ja": "贈った人",
+            "en": "The giver"
+          },
+          "type": {
+            "ja": "プレイヤー",
+            "en": "Player"
+          }
+        },
+        {
+          "name": {
+            "ja": "贈った数",
+            "en": "Number of gifts"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          }
+        }
+      ],
+      "frequent": false,
+      "usesName": false,
+      "signature": "public override void OnVRCPlusMassGift(VRCPlayerApi gifter, int numGifts)",
+      "needs": []
+    },
+    {
+      "id": "ScriptNotified",
+      "category": "Link",
+      "code": "SendCustomEvent",
+      "name": {
+        "ja": "ほかのスクリプトから通知されたとき",
+        "en": "Notified By Another Script"
+      },
+      "description": {
+        "ja": "ほかの UdonSharp スクリプト（ProTV などの動画プレイヤーやペンなど）から、決めた名前で通知が届いたとき。通知の登録は、ワールドの開始時に Tripwire が自動で行います。",
+        "en": "Another U# script (a video player, a pen...) calls this trigger back by name. Tripwire registers with it at Start."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": true,
+      "signature": null,
+      "needs": []
+    },
+    {
+      "id": "OnEnable",
+      "category": "Advanced",
+      "code": "OnEnable",
+      "name": {
+        "ja": "オブジェクトが有効になったとき",
+        "en": "OnEnable"
+      },
+      "description": {
+        "ja": "このオブジェクトが有効（表示）になったとき。",
+        "en": "When this object becomes active."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnEnable()",
+      "needs": []
+    },
+    {
+      "id": "OnDisable",
+      "category": "Advanced",
+      "code": "OnDisable",
+      "name": {
+        "ja": "オブジェクトが無効になったとき",
+        "en": "OnDisable"
+      },
+      "description": {
+        "ja": "このオブジェクトが無効（非表示）になったとき。",
+        "en": "When this object becomes inactive."
+      },
+      "values": [],
+      "frequent": false,
+      "usesName": false,
+      "signature": "void OnDisable()",
+      "needs": []
+    }
+  ],
+  "actions": [
+    {
+      "id": "GameObject.SetActive",
+      "category": "Show",
+      "code": "GameObject.SetActive",
+      "name": {
+        "ja": "オブジェクトを表示・非表示",
+        "en": "Set Active"
+      },
+      "description": {
+        "ja": "オブジェクトを有効（表示）または無効（非表示）にします。",
+        "en": "Show or hide objects."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "オブジェクトのリスト",
+            "en": "Object list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "表示する",
+            "en": "Show"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          },
+          "default": "true"
+        }
+      ],
+      "template": "{targets}.SetActive({active});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "GameObject.ToggleActive",
+      "category": "Show",
+      "code": "GameObject.ToggleActive",
+      "name": {
+        "ja": "オブジェクトの表示を切り替える",
+        "en": "Toggle Active"
+      },
+      "description": {
+        "ja": "表示されていれば非表示に、非表示なら表示にします。",
+        "en": "Flip each object between shown and hidden."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "オブジェクトのリスト",
+            "en": "Object list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.SetActive(!{targets}.activeSelf);",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Collider.SetEnabled",
+      "category": "Show",
+      "code": "Collider.SetEnabled",
+      "name": {
+        "ja": "コライダーのオン・オフ",
+        "en": "Set Collider Enabled"
+      },
+      "description": {
+        "ja": "見た目はそのままで、当たり判定だけを切り替えます。",
+        "en": "Enable or disable colliders."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Colliderのリスト",
+            "en": "Collider list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "オンにする",
+            "en": "On"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          },
+          "default": "true"
+        }
+      ],
+      "template": "{targets}.enabled = {enabled};",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Renderer.SetEnabled",
+      "category": "Show",
+      "code": "Renderer.SetEnabled",
+      "name": {
+        "ja": "レンダラーのオン・オフ",
+        "en": "Set Renderer Enabled"
+      },
+      "description": {
+        "ja": "当たり判定は残して、見た目（描画）だけを切り替えます。",
+        "en": "Show or hide renderers without disabling the object."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Rendererのリスト",
+            "en": "Renderer list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "オンにする",
+            "en": "On"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          },
+          "default": "true"
+        }
+      ],
+      "template": "{targets}.enabled = {enabled};",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Behaviour.SetEnabled",
+      "category": "Show",
+      "code": "Behaviour.SetEnabled",
+      "name": {
+        "ja": "コンポーネントのオン・オフ",
+        "en": "Set Component Enabled"
+      },
+      "description": {
+        "ja": "ライトや音源などのコンポーネントを有効・無効にします。",
+        "en": "Enable or disable components (Light, Animator, AudioSource, UdonBehaviour, ...)."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Behaviourのリスト",
+            "en": "Behaviour list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "オンにする",
+            "en": "On"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          },
+          "default": "true"
+        }
+      ],
+      "template": "{targets}.enabled = {enabled};",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Transform.SetPosition",
+      "category": "Move",
+      "code": "Transform.SetPosition",
+      "name": {
+        "ja": "位置を変える",
+        "en": "Set Position"
+      },
+      "description": {
+        "ja": "オブジェクトを指定した位置へ動かします（自分の画面でだけ動きます）。",
+        "en": "Move objects to a world position (local only, not synced)."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Transformのリスト",
+            "en": "Transform list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "位置",
+            "en": "Position"
+          },
+          "type": {
+            "ja": "位置",
+            "en": "Position"
+          },
+          "default": "(0, 0, 0)"
+        }
+      ],
+      "template": "{targets}.position = {position};",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Transform.MoveTo",
+      "category": "Move",
+      "code": "Transform.MoveTo",
+      "name": {
+        "ja": "別のオブジェクトの位置へ動かす",
+        "en": "Move To"
+      },
+      "description": {
+        "ja": "オブジェクトを、指定したオブジェクトと同じ位置・向きへ動かします（自分の画面でだけ動きます）。",
+        "en": "Move objects to another object's position and rotation (local only)."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Transformのリスト",
+            "en": "Transform list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "移動先",
+            "en": "Destination"
+          },
+          "type": {
+            "ja": "Transform",
+            "en": "Transform"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.SetPositionAndRotation({destination}.position, {destination}.rotation);",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Animator.SetTrigger",
+      "category": "Move",
+      "code": "Animator.SetTrigger",
+      "name": {
+        "ja": "Animator の Trigger を送る",
+        "en": "Animator Set Trigger"
+      },
+      "description": {
+        "ja": "Animator の Trigger パラメータを送ります。",
+        "en": "Fire an Animator trigger parameter."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Animatorのリスト",
+            "en": "Animator list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "パラメータ名",
+            "en": "Parameter"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.SetTrigger({parameter});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Animator.SetBool",
+      "category": "Move",
+      "code": "Animator.SetBool",
+      "name": {
+        "ja": "Animator の Bool を変える",
+        "en": "Animator Set Bool"
+      },
+      "description": {
+        "ja": "Animator の Bool パラメータを変えます。",
+        "en": "Set an Animator bool parameter."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Animatorのリスト",
+            "en": "Animator list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "パラメータ名",
+            "en": "Parameter"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "値",
+            "en": "Value"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          },
+          "default": "true"
+        }
+      ],
+      "template": "{targets}.SetBool({parameter}, {value});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Animator.SetInteger",
+      "category": "Move",
+      "code": "Animator.SetInteger",
+      "name": {
+        "ja": "Animator の Int を変える",
+        "en": "Animator Set Integer"
+      },
+      "description": {
+        "ja": "Animator の Int パラメータを変えます。",
+        "en": "Set an Animator int parameter."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Animatorのリスト",
+            "en": "Animator list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "パラメータ名",
+            "en": "Parameter"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "値",
+            "en": "Value"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          },
+          "default": "0"
+        }
+      ],
+      "template": "{targets}.SetInteger({parameter}, {value});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Animator.SetFloat",
+      "category": "Move",
+      "code": "Animator.SetFloat",
+      "name": {
+        "ja": "Animator の Float を変える",
+        "en": "Animator Set Float"
+      },
+      "description": {
+        "ja": "Animator の Float パラメータを変えます。",
+        "en": "Set an Animator float parameter."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Animatorのリスト",
+            "en": "Animator list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "パラメータ名",
+            "en": "Parameter"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "値",
+            "en": "Value"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          },
+          "default": "0"
+        }
+      ],
+      "template": "{targets}.SetFloat({parameter}, {value});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Animator.Play",
+      "category": "Move",
+      "code": "Animator.Play",
+      "name": {
+        "ja": "Animator のステートを再生",
+        "en": "Animator Play State"
+      },
+      "description": {
+        "ja": "ステート名を指定して、そこから再生します。",
+        "en": "Jump to a state by name."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Animatorのリスト",
+            "en": "Animator list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "ステート名",
+            "en": "State"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.Play({state});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "AudioSource.Play",
+      "category": "SoundFx",
+      "code": "AudioSource.Play",
+      "name": {
+        "ja": "音を鳴らす",
+        "en": "Play Audio"
+      },
+      "description": {
+        "ja": "音源を最初から再生します。",
+        "en": "Play audio sources from the start."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "AudioSourceのリスト",
+            "en": "AudioSource list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.Play();",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "AudioSource.Stop",
+      "category": "SoundFx",
+      "code": "AudioSource.Stop",
+      "name": {
+        "ja": "音を止める",
+        "en": "Stop Audio"
+      },
+      "description": {
+        "ja": "音源を止めます。",
+        "en": "Stop audio sources."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "AudioSourceのリスト",
+            "en": "AudioSource list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.Stop();",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "AudioSource.PlayOneShot",
+      "category": "SoundFx",
+      "code": "AudioSource.PlayOneShot",
+      "name": {
+        "ja": "効果音を 1 回鳴らす",
+        "en": "Play Sound Once"
+      },
+      "description": {
+        "ja": "鳴っている音を止めずに、別の音を 1 回だけ重ねて鳴らします。",
+        "en": "Play a clip once without stopping what the source is playing."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "AudioSourceのリスト",
+            "en": "AudioSource list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "鳴らす音",
+            "en": "Sound"
+          },
+          "type": {
+            "ja": "AudioClip",
+            "en": "AudioClip"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.PlayOneShot({clip});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "ParticleSystem.Play",
+      "category": "SoundFx",
+      "code": "ParticleSystem.Play",
+      "name": {
+        "ja": "パーティクルを出す",
+        "en": "Play Particles"
+      },
+      "description": {
+        "ja": "パーティクルを再生します。",
+        "en": "Start particle systems."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "ParticleSystemのリスト",
+            "en": "ParticleSystem list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.Play();",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "ParticleSystem.Stop",
+      "category": "SoundFx",
+      "code": "ParticleSystem.Stop",
+      "name": {
+        "ja": "パーティクルを止める",
+        "en": "Stop Particles"
+      },
+      "description": {
+        "ja": "パーティクルを止めます。",
+        "en": "Stop particle systems."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "ParticleSystemのリスト",
+            "en": "ParticleSystem list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.Stop();",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Text.SetText",
+      "category": "Text",
+      "code": "Text.SetText",
+      "name": {
+        "ja": "テキストを変える",
+        "en": "Set Text"
+      },
+      "description": {
+        "ja": "TextMeshPro のテキストを書き換えます。{変数名} で変数の値を入れられます。",
+        "en": "Change TextMeshPro / TextMeshPro UGUI text."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "TMP_Textのリスト",
+            "en": "TMP_Text list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.text = {text};",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Player.Teleport",
+      "category": "Player",
+      "code": "Player.Teleport",
+      "name": {
+        "ja": "テレポートする",
+        "en": "Teleport Local Player"
+      },
+      "description": {
+        "ja": "自分を、指定したオブジェクトの位置・向きへ移動させます。",
+        "en": "Teleport the local player to an object's position and rotation."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "移動先",
+            "en": "Destination"
+          },
+          "type": {
+            "ja": "Transform",
+            "en": "Transform"
+          },
+          "default": null
+        }
+      ],
+      "template": "Networking.LocalPlayer.TeleportTo({destination}.position, {destination}.rotation);",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Player.SetSpeed",
+      "category": "Player",
+      "code": "Player.SetSpeed",
+      "name": {
+        "ja": "移動の速さを変える",
+        "en": "Set Local Player Speed"
+      },
+      "description": {
+        "ja": "自分の歩く・走る・横歩きの速さと、ジャンプの強さを変えます。",
+        "en": "Walk / run / strafe speed and jump impulse of the local player."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "歩く速さ",
+            "en": "Walk"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          },
+          "default": "2"
+        },
+        {
+          "name": {
+            "ja": "走る速さ",
+            "en": "Run"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          },
+          "default": "4"
+        },
+        {
+          "name": {
+            "ja": "横歩きの速さ",
+            "en": "Strafe"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          },
+          "default": "2"
+        },
+        {
+          "name": {
+            "ja": "ジャンプの強さ",
+            "en": "Jump"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          },
+          "default": "3"
+        }
+      ],
+      "template": "Networking.LocalPlayer.SetWalkSpeed({walk}); Networking.LocalPlayer.SetRunSpeed({run}); Networking.LocalPlayer.SetStrafeSpeed({strafe}); Networking.LocalPlayer.SetJumpImpulse({jump});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Pickup.Drop",
+      "category": "Pickup",
+      "code": "Pickup.Drop",
+      "name": {
+        "ja": "ピックアップを離させる",
+        "en": "Force Drop"
+      },
+      "description": {
+        "ja": "自分が持っているピックアップを手から離させます。",
+        "en": "Make the local player drop these pickups."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "VRC_Pickupのリスト",
+            "en": "VRC_Pickup list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.Drop();",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Networking.TakeOwnership",
+      "category": "Pickup",
+      "code": "Networking.TakeOwnership",
+      "name": {
+        "ja": "オーナーになる",
+        "en": "Take Ownership"
+      },
+      "description": {
+        "ja": "自分をこのオブジェクトのオーナーにします。",
+        "en": "Make the local player the owner of these objects."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "オブジェクトのリスト",
+            "en": "Object list"
+          },
+          "default": null
+        }
+      ],
+      "template": "Networking.SetOwner(Networking.LocalPlayer, {targets});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Flow.If",
+      "category": "Flow",
+      "code": "Flow.If",
+      "name": {
+        "ja": "If",
+        "en": "If"
+      },
+      "description": {
+        "ja": "条件を満たすとき（Then）と満たさないとき（Else）で、別のアクションを実行します。Else に If を入れると Else If になります。",
+        "en": "Run some actions when conditions hold and others when they don't."
+      },
+      "parameters": [],
+      "template": null,
+      "holdsActions": true,
+      "hasConditions": true
+    },
+    {
+      "id": "Flow.Repeat",
+      "category": "Flow",
+      "code": "Flow.Repeat",
+      "name": {
+        "ja": "Repeat",
+        "en": "Repeat"
+      },
+      "description": {
+        "ja": "決めた回数だけ、中のアクション（Do）をくり返します。何回目か（0 から）を変数に入れることもできます。",
+        "en": "Run some actions a number of times."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "回数",
+            "en": "Times"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          },
+          "default": "3"
+        },
+        {
+          "name": {
+            "ja": "何回目か",
+            "en": "Round into"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": true,
+      "hasConditions": false
+    },
+    {
+      "id": "Flow.ForEach",
+      "category": "Flow",
+      "code": "Flow.ForEach",
+      "name": {
+        "ja": "For Each",
+        "en": "For Each"
+      },
+      "description": {
+        "ja": "リストの変数の中身を 1 つずつ変数に入れて、中のアクション（Do）を実行します。",
+        "en": "Run some actions once for each item of a list variable."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "リスト",
+            "en": "List"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "中身を入れる変数",
+            "en": "Each item into"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "何回目か",
+            "en": "Round into"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": true,
+      "hasConditions": false
+    },
+    {
+      "id": "Flow.While",
+      "category": "Flow",
+      "code": "Flow.While",
+      "name": {
+        "ja": "While",
+        "en": "While"
+      },
+      "description": {
+        "ja": "条件を満たしている間、中のアクション（Do）をくり返します。中で条件の変数を変えないとループが終わらず、Udon がこのトリガーを止め、以後動かなくなります。",
+        "en": "Run some actions again and again while conditions hold."
+      },
+      "parameters": [],
+      "template": null,
+      "holdsActions": true,
+      "hasConditions": true
+    },
+    {
+      "id": "Flow.Break",
+      "category": "Flow",
+      "code": "Flow.Break",
+      "name": {
+        "ja": "Break",
+        "en": "Break"
+      },
+      "description": {
+        "ja": "ループをやめて、その後ろへ進みます。",
+        "en": "Stop repeating and carry on after the loop."
+      },
+      "parameters": [],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Flow.Continue",
+      "category": "Flow",
+      "code": "Flow.Continue",
+      "name": {
+        "ja": "Continue",
+        "en": "Continue"
+      },
+      "description": {
+        "ja": "ループの今の回の残りを飛ばして、次の回へ進みます。",
+        "en": "Skip the rest of this round of the loop and go on with the next."
+      },
+      "parameters": [],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Flow.Stop",
+      "category": "Flow",
+      "code": "Flow.Stop",
+      "name": {
+        "ja": "Return",
+        "en": "Return"
+      },
+      "description": {
+        "ja": "このイベントの残りのアクションを実行しません。",
+        "en": "Skip the rest of this event's actions."
+      },
+      "parameters": [],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Timer.Start",
+      "category": "Flow",
+      "code": "Timer.Start",
+      "name": {
+        "ja": "タイマーを始める",
+        "en": "Start Timer"
+      },
+      "description": {
+        "ja": "このトリガーのタイマーを始めます（動いていれば始め直します）。",
+        "en": "Start (or restart) a timer event of this trigger."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "タイマー",
+            "en": "Timer"
+          },
+          "type": {
+            "ja": "タイマー",
+            "en": "Timer"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Timer.Stop",
+      "category": "Flow",
+      "code": "Timer.Stop",
+      "name": {
+        "ja": "タイマーを止める",
+        "en": "Stop Timer"
+      },
+      "description": {
+        "ja": "このトリガーのタイマーを止めます。",
+        "en": "Stop a timer event of this trigger."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "タイマー",
+            "en": "Timer"
+          },
+          "type": {
+            "ja": "タイマー",
+            "en": "Timer"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Variable.Set",
+      "category": "Variable",
+      "code": "Variable.Set",
+      "name": {
+        "ja": "変数に値を入れる",
+        "en": "Set Variable"
+      },
+      "description": {
+        "ja": "変数の値を変えます。同期した変数なら全員に届きます。",
+        "en": "Set a trigger variable. Synced variables reach everyone, including late joiners."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "値",
+            "en": "Value"
+          },
+          "type": {
+            "ja": "数",
+            "en": "Number"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Variable.Toggle",
+      "category": "Variable",
+      "code": "Variable.Toggle",
+      "name": {
+        "ja": "変数を切り替える",
+        "en": "Toggle Variable"
+      },
+      "description": {
+        "ja": "オン/オフの変数のオンとオフを入れ替えます。",
+        "en": "Flip a bool variable."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Variable.Add",
+      "category": "Variable",
+      "code": "Variable.Add",
+      "name": {
+        "ja": "変数に足す",
+        "en": "Add To Variable"
+      },
+      "description": {
+        "ja": "数の変数に値を足します（引くときはマイナス）。",
+        "en": "Add to an Integer or Number variable."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "足す量",
+            "en": "Amount"
+          },
+          "type": {
+            "ja": "数",
+            "en": "Number"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Variable.Random",
+      "category": "Variable",
+      "code": "Variable.Random",
+      "name": {
+        "ja": "ランダムな数を入れる",
+        "en": "Random Number"
+      },
+      "description": {
+        "ja": "最小〜最大のランダムな数を、数の変数に入れます（整数なら最大も含む）。",
+        "en": "Put a random number from min to max (both included for whole numbers) into a number variable."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "最小",
+            "en": "Min"
+          },
+          "type": {
+            "ja": "数",
+            "en": "Number"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "最大",
+            "en": "Max"
+          },
+          "type": {
+            "ja": "数",
+            "en": "Number"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Video.PlayUrl",
+      "category": "Video",
+      "code": "Video.PlayUrl",
+      "name": {
+        "ja": "URL の動画を再生",
+        "en": "Play Video URL"
+      },
+      "description": {
+        "ja": "URL を読み込んで再生します（新しい URL を読めるのは 5 秒に 1 回まで）。",
+        "en": "Load and play a URL (each player may load a new URL at most every 5 seconds)."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "BaseVRCVideoPlayerのリスト",
+            "en": "BaseVRCVideoPlayer list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "URL",
+            "en": "URL"
+          },
+          "type": {
+            "ja": "URL",
+            "en": "URL"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.PlayURL({url});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Video.LoadUrl",
+      "category": "Video",
+      "code": "Video.LoadUrl",
+      "name": {
+        "ja": "URL の動画を読み込む",
+        "en": "Load Video URL"
+      },
+      "description": {
+        "ja": "URL を読み込むだけで、まだ再生しません。",
+        "en": "Load a URL without starting it."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "BaseVRCVideoPlayerのリスト",
+            "en": "BaseVRCVideoPlayer list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "URL",
+            "en": "URL"
+          },
+          "type": {
+            "ja": "URL",
+            "en": "URL"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.LoadURL({url});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Video.Play",
+      "category": "Video",
+      "code": "Video.Play",
+      "name": {
+        "ja": "動画を再生",
+        "en": "Play Video"
+      },
+      "description": {
+        "ja": "読み込んだ動画を再生（一時停止からの再開）します。",
+        "en": "Play (or resume) the loaded video."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "BaseVRCVideoPlayerのリスト",
+            "en": "BaseVRCVideoPlayer list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.Play();",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Video.Pause",
+      "category": "Video",
+      "code": "Video.Pause",
+      "name": {
+        "ja": "動画を一時停止",
+        "en": "Pause Video"
+      },
+      "description": {
+        "ja": "動画を一時停止します。",
+        "en": "Pause the video."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "BaseVRCVideoPlayerのリスト",
+            "en": "BaseVRCVideoPlayer list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.Pause();",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Video.Stop",
+      "category": "Video",
+      "code": "Video.Stop",
+      "name": {
+        "ja": "動画を止める",
+        "en": "Stop Video"
+      },
+      "description": {
+        "ja": "動画を停止します。",
+        "en": "Stop the video."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "BaseVRCVideoPlayerのリスト",
+            "en": "BaseVRCVideoPlayer list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.Stop();",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Video.SetTime",
+      "category": "Video",
+      "code": "Video.SetTime",
+      "name": {
+        "ja": "動画の位置を変える",
+        "en": "Seek Video"
+      },
+      "description": {
+        "ja": "指定した秒数の位置へ移動します。",
+        "en": "Jump to a time in seconds."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "BaseVRCVideoPlayerのリスト",
+            "en": "BaseVRCVideoPlayer list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "何秒後",
+            "en": "Seconds"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          },
+          "default": "0"
+        }
+      ],
+      "template": "{targets}.SetTime({seconds});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Video.SetLoop",
+      "category": "Video",
+      "code": "Video.SetLoop",
+      "name": {
+        "ja": "動画のループ",
+        "en": "Loop Video"
+      },
+      "description": {
+        "ja": "ループ再生のオン・オフを切り替えます。",
+        "en": "Turn looping on or off."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "BaseVRCVideoPlayerのリスト",
+            "en": "BaseVRCVideoPlayer list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "ループする",
+            "en": "Loop"
+          },
+          "type": {
+            "ja": "オン/オフ",
+            "en": "On/Off"
+          },
+          "default": "true"
+        }
+      ],
+      "template": "{targets}.Loop = {loop};",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Script.Call",
+      "category": "Link",
+      "code": "UdonSharp",
+      "name": {
+        "ja": "ほかのスクリプトを使う",
+        "en": "Use another script"
+      },
+      "description": {
+        "ja": "ほかの UdonSharp スクリプト（ギミックや動画プレイヤーなど）の機能を呼んだり、値を変えたりします。",
+        "en": "Call a function of another UdonSharp script (gimmicks, video players...) or change its values."
+      },
+      "parameters": [],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Event.Send",
+      "category": "Link",
+      "code": "SendCustomEvent",
+      "name": {
+        "ja": "カスタムイベントを呼ぶ",
+        "en": "Send Event"
+      },
+      "description": {
+        "ja": "トリガーやスクリプトのカスタムイベントを、名前で呼び出します。",
+        "en": "Run a Custom event on triggers or any Udon behaviour (by method name)."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "UdonBehaviourのリスト",
+            "en": "UdonBehaviour list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "呼ぶ名前",
+            "en": "Event name"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "誰の画面で",
+            "en": "Run on"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.{broadcast}{event});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Event.SendDelayed",
+      "category": "Link",
+      "code": "SendCustomEventDelayedSeconds",
+      "name": {
+        "ja": "何秒か後にカスタムイベントを呼ぶ",
+        "en": "Send Event Delayed"
+      },
+      "description": {
+        "ja": "何秒か後に、カスタムイベントを名前で呼び出します。",
+        "en": "Run a Custom event locally after some seconds."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "UdonBehaviourのリスト",
+            "en": "UdonBehaviour list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "呼ぶ名前",
+            "en": "Event name"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "何秒後",
+            "en": "Seconds"
+          },
+          "type": {
+            "ja": "小数",
+            "en": "Number"
+          },
+          "default": "1"
+        }
+      ],
+      "template": "{targets}.SendCustomEventDelayedSeconds({event}, {seconds});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Trigger.SetVariable",
+      "category": "Link",
+      "code": "Trigger.SetVariable",
+      "name": {
+        "ja": "ほかのトリガーの変数を変える",
+        "en": "Set Another Trigger's Variable"
+      },
+      "description": {
+        "ja": "ほかのトリガーの変数を変えます。その変数が同期していれば全員に届き、「変数が変わったとき」も動きます。続けて「カスタムイベントを呼ぶ」と、値を渡して呼べます。",
+        "en": "Set a variable of another trigger; its sync and change events run as if it set it itself."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "ほかのトリガー",
+            "en": "Trigger"
+          },
+          "type": {
+            "ja": "UdonBehaviour",
+            "en": "UdonBehaviour"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "そのトリガーの変数",
+            "en": "Its variable"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "値",
+            "en": "Value"
+          },
+          "type": {
+            "ja": "数",
+            "en": "Number"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Trigger.GetVariable",
+      "category": "Link",
+      "code": "Trigger.GetVariable",
+      "name": {
+        "ja": "ほかのトリガーの変数を読む",
+        "en": "Read Another Trigger's Variable"
+      },
+      "description": {
+        "ja": "ほかのトリガーの変数の値を、このトリガーの変数に入れます。",
+        "en": "Read a variable of another trigger into one of this trigger's variables."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "ほかのトリガー",
+            "en": "Trigger"
+          },
+          "type": {
+            "ja": "UdonBehaviour",
+            "en": "UdonBehaviour"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "そのトリガーの変数",
+            "en": "Its variable"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "入れる変数",
+            "en": "Into"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Udon.Call",
+      "category": "Advanced",
+      "code": "Udon API",
+      "name": {
+        "ja": "Udon の機能を呼ぶ（Udon API）",
+        "en": "Call Udon API"
+      },
+      "description": {
+        "ja": "Udon で使えるメソッドやプロパティを、検索して何でも呼べます。",
+        "en": "Call any method or set any property Udon exposes."
+      },
+      "parameters": [],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Debug.Log",
+      "category": "Advanced",
+      "code": "Debug.Log",
+      "name": {
+        "ja": "ログを出す",
+        "en": "Log"
+      },
+      "description": {
+        "ja": "Unity のコンソールにメッセージを出します（確認用）。",
+        "en": "Write a message to the log."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "メッセージ",
+            "en": "Message"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        }
+      ],
+      "template": "Debug.Log({message});",
+      "holdsActions": false,
+      "hasConditions": false
+    }
+  ]
+}
