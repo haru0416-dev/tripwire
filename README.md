@@ -82,9 +82,9 @@ The values an event brings (the player who entered, what hit the object, the MID
 
 ### What to do (actions)
 
-Ready-made actions cover showing and hiding, moving, Animator parameters, sound and particles, text, teleporting and walk speed, pickups, video players, and variables.
+Ready-made actions cover showing and hiding, moving, Animator parameters, sound and particles, text, teleporting and walk speed, pickups, video players, variables and calculations, and getting components.
 
-For anything else, search the methods and properties Udon exposes and pick one to call. Methods of your own UdonSharp scripts can be called too.
+For anything else, search the methods and properties Udon exposes and pick one to call, including ones with `out` parameters (received by variables) and ones that report back to the trigger's events, such as loading text or images from the web. Methods of your own UdonSharp scripts can be called too.
 
 ### Flow
 

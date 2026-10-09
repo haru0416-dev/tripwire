@@ -28,6 +28,21 @@ Next to the initial value, pick whether it syncs, or make it temporary.
 
 How syncing works and when to use it: [The same state for everyone](./sync).
 
+## Changing values
+
+The actions in the Variable category change a variable's value.
+
+| Action | Does |
+|---|---|
+| [Set Variable](/en/reference/actions/variable-set) | Puts in a value, another variable or an event value |
+| [Toggle Variable](/en/reference/actions/variable-toggle) | Flips on/off |
+| [Add To Variable](/en/reference/actions/variable-add) | Adds a number (negative to subtract) |
+| [Random Number](/en/reference/actions/variable-random) | Puts in a random number from min to max |
+| [Calculate](/en/reference/actions/variable-calculate) | Puts in A `+ − × ÷ %` B (positions and colors too; text joins) |
+| [Get Component](/en/reference/actions/variable-getcomponent) | Puts an object's component into a variable of that type |
+
+A **Call Udon API** result can go into a variable too. However it changes, a synced variable reaches everyone and On Variable Changed runs.
+
 ## Values in text
 
 In **Set Text** and **Log**, write a variable's name in braces, like `{score}`, and it becomes the variable's current value: `Score: {score}` shows "Score: 12".

@@ -108,8 +108,22 @@ namespace Tripwire.Tests
                     var call = new ActionCall { ActionId = ActionCatalog.CallId, Call = c };
                     // Constructors: arguments from variables, so U# does not fold them with placeholder zeros
                     // (folding with real values is checked when generating; see UdonApi.CheckConstantConstruction).
+                    int k = 0, first = c.Instance != null ? 1 : 0;
                     foreach (var type in TripwireModel.CallArgTypes(c))
-                        call.Args.Add(c.Kind == CallKind.Ctor && type.Kind != ValueKind.Object && type.Kind != ValueKind.Player ? ArgValue.Var(VarFor(type)) : Arg(type));
+                    {
+                        int pi = k++ - first;
+                        if (pi >= 0 && c.Params[pi].Receives)
+                        {
+                            // out: a variable of its own (the result may have the same type, and can't share one)
+                            var outName = "o" + p.Variables.Count;
+                            p.Variables.Add(new VariableDecl { Name = outName, Type = type });
+                            call.Args.Add(ArgValue.Var(outName));
+                            continue;
+                        }
+                        // A struct's setter or method works on a variable (stored back after the call).
+                        bool structTarget = pi < 0 && c.InstanceIsStruct;
+                        call.Args.Add(structTarget || c.Kind == CallKind.Ctor && type.Kind != ValueKind.Object && type.Kind != ValueKind.Player ? ArgValue.Var(VarFor(type)) : Arg(type));
+                    }
                     if (c.Returns != null) call.ResultVariable = VarFor(c.Returns);
                     e.Actions.Add(call);
                 }

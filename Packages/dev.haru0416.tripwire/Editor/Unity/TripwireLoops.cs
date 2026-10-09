@@ -91,7 +91,11 @@ namespace Tripwire.Editor
             var reported = new HashSet<string>();
             void Report(LinkKind[] kinds, System.Func<string, bool, string> en, System.Func<string, bool, string> ja)
             {
-                var cycles = CodeGenerator.Cycles(Enumerable.Range(0, nodes.Count), n => links.Where(l => l.From == n && kinds.Contains(l.Kind)).Select(l => l.To));
+                // Each node's next nodes, listed once (the search asks at every step).
+                var next = Enumerable.Range(0, nodes.Count).Select(_ => new List<int>()).ToArray();
+                foreach (var l in links)
+                    if (kinds.Contains(l.Kind) && !next[l.From].Contains(l.To)) next[l.From].Add(l.To);
+                var cycles = CodeGenerator.Cycles(Enumerable.Range(0, nodes.Count), n => next[n]);
                 foreach (var c in cycles)
                 {
                     // Only loops through another trigger or a dragged-in target, and only those this trigger is in.

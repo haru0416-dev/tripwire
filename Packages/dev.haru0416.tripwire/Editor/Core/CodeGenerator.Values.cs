@@ -83,6 +83,7 @@ namespace Tripwire.Core
                 {
                     case ArgSource.Constant:
                         if (!IsConstantKindCompatible(want.Kind, arg.Constant)) { Error(Texts.T("Needs a value of type " + Texts.TypeName(want) + ".", "ここに値を入れてください（" + Texts.TypeName(want) + "）。"), ev, act, argIndex, cond: cErr); return null; }
+                        if (!EnumMemberExists(want, arg.Constant)) { Error(Texts.T(Texts.TypeName(want) + " has no '" + arg.Constant + "': pick another.", Texts.TypeName(want) + " に「" + arg.Constant + "」はありません。選び直してください。"), ev, act, argIndex, cond: cErr); return null; }
                         if (want.Kind == ValueKind.Url && !want.IsArray)
                         {
                             // No VRCUrl literal exists in Udon: a field the editor fills with this URL.
@@ -169,7 +170,7 @@ namespace Tripwire.Core
                     case ArgSource.Self:
                         if (want.UnityType == "UnityEngine.GameObject") return new Operand { Expr = "gameObject" };
                         if (want.UnityType == "UnityEngine.Transform") return new Operand { Expr = "transform" };
-                        if (want.UnityType == "VRC.Udon.UdonBehaviour") return new Operand { Expr = "this" };
+                        if (want.UnityType == ParamType.Behaviour) return new Operand { Expr = "this" };
                         // GetComponent on a non-component type throws at runtime, which halts the whole behaviour.
                         if (!want.IsComponent) { Error(Texts.T("'This GameObject' cannot provide a " + Texts.TypeName(want) + ".", "「このオブジェクト」は " + Texts.TypeName(want) + " として使えません。"), ev, act, argIndex); return null; }
                         return new Operand { Expr = "GetComponent<" + want.UnityType + ">()" }.Guarded();

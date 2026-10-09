@@ -88,6 +88,19 @@ namespace Tripwire.Core
         /// </summary>
         public static Func<CallSpec, List<ArgValue>, string> CheckConstantConstruction;
 
+        /// <summary>
+        /// The members of an enum by its C# name, or null when unknown (installed by the editor). A member that isn't
+        /// there (renamed in an SDK update, or data from elsewhere) would stop every script from compiling, not just one.
+        /// </summary>
+        public static Func<string, string[]> EnumMembersOf;
+
+        /// <summary>Whether Udon can sync a variable of this type (installed by the editor: Udon's own list); null: not checked.</summary>
+        public static Func<ParamType, bool> CanSync;
+
+        /// <summary>The enum constant is one of its type's members (or the members aren't known here).</summary>
+        static bool EnumMemberExists(ParamType type, object value) =>
+            type.Kind != ValueKind.Enum || EnumMembersOf?.Invoke(type.UnityType) is not string[] members || (value is string m && Array.IndexOf(members, m) >= 0);
+
         /// <summary>Value range of an integer type narrower than int, or null.</summary>
         public static (long min, long max)? NarrowIntRange(string type)
         {
@@ -135,6 +148,16 @@ namespace Tripwire.Core
             var h = FullTypeName(have);
             return w == h || TypeAssignable(w, h);
         }
+
+        /// <summary>Kinds Calculate can put a result into.</summary>
+        public static bool Calculable(ValueKind k) =>
+            k == ValueKind.Int || k == ValueKind.Float || k == ValueKind.Vector2 || k == ValueKind.Vector3 || k == ValueKind.Color || k == ValueKind.String;
+
+        /// <summary>Calculate's B: a number when a position or color is multiplied or divided, else the variable's own type.</summary>
+        public static ParamType CalculateOperandB(ParamType variable, ActionCatalog.CalcOp op) =>
+            (op == ActionCatalog.CalcOp.Multiply || op == ActionCatalog.CalcOp.Divide) && variable != null
+            && (variable.Kind == ValueKind.Vector2 || variable.Kind == ValueKind.Vector3 || variable.Kind == ValueKind.Color)
+                ? ParamType.Of(ValueKind.Float) : variable;
 
         /// <summary>Temporary variables are reset from a constant: single values with a literal form only.</summary>
         public static bool CanBeTemporary(ParamType t) => t != null && !t.IsArray && HasLiteral(t.Kind);

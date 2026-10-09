@@ -55,6 +55,10 @@ namespace Tripwire.Core
                 case ActionSpecial.AddVariable:
                 case ActionSpecial.RandomVariable:
                     return (type.Kind == ValueKind.Int || type.Kind == ValueKind.Float) && single;
+                case ActionSpecial.Calculate:
+                    return single && CodeGenerator.Calculable(type.Kind);
+                case ActionSpecial.GetComponent:
+                    return single && type.Kind == ValueKind.Object && type.IsComponent;
                 case ActionSpecial.GetRemoteVariable:
                     // listType: the other trigger's variable being read.
                     return listType == null || (type != null && CodeGenerator.IsAssignable(type, listType));

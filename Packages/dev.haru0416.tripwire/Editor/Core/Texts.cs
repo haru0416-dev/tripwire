@@ -295,6 +295,8 @@ namespace Tripwire.Core
             { "Variable.Set", ("変数に値を入れる", "変数の値を変えます。同期した変数なら全員に届きます。") },
             { "Variable.Toggle", ("変数を切り替える", "オン/オフの変数のオンとオフを入れ替えます。") },
             { "Variable.Add", ("変数に足す", "数の変数に値を足します（引くときはマイナス）。") },
+            { "Variable.GetComponent", ("コンポーネントを取り出す", "オブジェクト（またはその子や親）のコンポーネントを、オブジェクトの変数に入れます。どのコンポーネントかは、変数の型で決まります。") },
+            { "Variable.Calculate", ("計算して変数に入れる", "A と B を + − × ÷ %（余り）で計算して、変数に入れます。数・位置・色を計算でき、文字は + でつなげられます。") },
             { "Trigger.SetVariable", ("ほかのトリガーの変数を変える", "ほかのトリガーの変数を変えます。その変数が同期していれば全員に届き、「変数が変わったとき」も動きます。続けて「カスタムイベントを呼ぶ」と、値を渡して呼べます。") },
             { "Trigger.GetVariable", ("ほかのトリガーの変数を読む", "ほかのトリガーの変数の値を、このトリガーの変数に入れます。") },
             { "Event.Send", ("カスタムイベントを呼ぶ", "トリガーやスクリプトのカスタムイベントを、名前で呼び出します。") },
@@ -342,6 +344,11 @@ namespace Tripwire.Core
             { "loop", ("Loop", "ループする") },
             { "variable", ("Variable", "変数") },
             { "amount", ("Amount", "足す量") },
+            { "a", ("A", "A") },
+            { "b", ("B", "B") },
+            { "operator", ("Operator", "計算") },
+            { "source", ("Object", "取り出すもと") },
+            { "where", ("Look in", "探す場所") },
             { "min", ("Min", "最小") },
             { "max", ("Max", "最大") },
             { "timer", ("Timer", "タイマー") },
@@ -363,6 +370,7 @@ namespace Tripwire.Core
         public static readonly string[] BroadcastChoicesJa = { "自分だけ（Local）", "全員（All）", "オーナーだけ（Owner）" };
         public static readonly string[] BroadcastChoicesEn = { "Only my screen", "Everyone's screen", "Owner's screen" };
         public static string[] BroadcastChoices => Japanese ? BroadcastChoicesJa : BroadcastChoicesEn;
+        public static string[] WhereChoices => Japanese ? new[] { "このオブジェクト", "子も探す", "親も探す" } : new[] { "This object", "Children too", "Parents too" };
 
         // ---- type names ----
 

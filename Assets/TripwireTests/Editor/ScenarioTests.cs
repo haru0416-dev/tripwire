@@ -86,6 +86,7 @@ namespace Tripwire.Tests
             AddMoreFlow();
             AddRemote();
             AddDebugTools();
+            AddWiderApi();
             Directory.CreateDirectory(SceneDir);
             EditorSceneManager.SaveScene(scene, ScenePath);
         }
@@ -304,7 +305,7 @@ namespace Tripwire.Tests
             }
 
             // F–J. Single features.
-            foreach (var part in new Func<Action<bool, string>, IEnumerator>[] { CheckInteractAndCalls, CheckScriptCall, CheckUiEvents, CheckVideo, CheckListen, CheckBranches, CheckTimers, CheckLoops, CheckMoreEvents, CheckCyanGuides, CheckMoreFlow, CheckRemote, CheckDebugTools })
+            foreach (var part in new Func<Action<bool, string>, IEnumerator>[] { CheckInteractAndCalls, CheckScriptCall, CheckUiEvents, CheckVideo, CheckListen, CheckBranches, CheckTimers, CheckLoops, CheckMoreEvents, CheckCyanGuides, CheckMoreFlow, CheckRemote, CheckDebugTools, CheckWiderApi })
             {
                 var steps = Flatten(part(Check));
                 while (steps.MoveNext()) yield return steps.Current;

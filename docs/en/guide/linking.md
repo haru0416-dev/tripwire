@@ -30,4 +30,4 @@ Tripwire knows the notifications and operations of ProTV, VizVid, USharpVideo an
 
 ## Calling Udon directly
 
-Anything not in the lists can be called with **Call Udon API**, under Advanced in Detailed mode: search the methods and properties Udon exposes and pick one.
+Anything not in the lists can be called with **Call Udon API**, under Advanced in Detailed mode: search the methods and properties Udon exposes and pick one. It also covers members with `out` parameters (received by variables), members that report back to this trigger's events (loading text or images from the web...), and changing part of a position or color. See [Call Udon API](/en/reference/actions/udon-call).

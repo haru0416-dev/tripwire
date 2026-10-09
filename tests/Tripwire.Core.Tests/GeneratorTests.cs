@@ -189,6 +189,8 @@ public class GeneratorTests
         var p = new TriggerProgram();
         p.Variables.Add(new VariableDecl { Name = "b", Kind = ValueKind.Bool });
         p.Variables.Add(new VariableDecl { Name = "n", Kind = ValueKind.Int });
+        var body = ParamType.Object("UnityEngine.Rigidbody"); body.IsComponent = true;
+        p.Variables.Add(new VariableDecl { Name = "body", Type = body }); // Get Component
         var e = Event("Interact");
         p.Events.Add(new EventBlock { EventId = "Timer", Name = "tick", Timer = new TimerSpec() }); // for Start / Stop Timer
         foreach (var spec in ActionCatalog.All)
@@ -199,8 +201,8 @@ public class GeneratorTests
             var call = new ActionCall { ActionId = spec.Id };
             foreach (var prm in spec.Params)
             {
-                bool number = spec.Special == ActionSpecial.AddVariable || spec.Special == ActionSpecial.RandomVariable;
-                if (prm.VariableRef) call.Args.Add(ArgValue.Const(number ? "n" : "b"));
+                bool number = spec.Special == ActionSpecial.AddVariable || spec.Special == ActionSpecial.RandomVariable || spec.Special == ActionSpecial.Calculate;
+                if (prm.VariableRef) call.Args.Add(ArgValue.Const(spec.Special == ActionSpecial.GetComponent ? "body" : number ? "n" : "b"));
                 else if (prm.Name == "event") call.Args.Add(ArgValue.Const("Ping")); // Send Event: an empty name is an error now
                 else if (prm.TimerRef) call.Args.Add(ArgValue.Const("tick"));
                 else if (prm.Type == null) call.Args.Add(ArgValue.Const(number ? (object)1 : true));

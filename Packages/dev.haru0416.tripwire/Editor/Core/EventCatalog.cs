@@ -7,8 +7,18 @@ namespace Tripwire.Core
     {
         public string Name;
         public ParamType Type;
-        public EventParam(string name, ParamType type) { Name = name; Type = type; }
+        /// <summary>Udon API calls: how the parameter is passed (Type is the value's type).</summary>
+        public ParamPass Pass;
+        public EventParam(string name, ParamType type, ParamPass pass = ParamPass.In) { Name = name; Type = type; Pass = pass; }
+        /// <summary>A variable receives this parameter's value from the call (`out` / `ref`).</summary>
+        public bool Receives => Pass == ParamPass.Out || Pass == ParamPass.Ref;
     }
+
+    /// <summary>
+    /// How a call's parameter is passed: a value; a variable the call writes (`out`) or reads and writes (`ref`); or an
+    /// array passed as a value whose contents the call fills in (LineRenderer.GetPositions).
+    /// </summary>
+    public enum ParamPass { In, Out, Ref, Fill }
 
     /// <summary>A part an event needs on the trigger's object; see <see cref="EventCatalog.Needs"/>.</summary>
     public enum EventNeed { Collider, Area, Pickup, Station, VideoPlayer, UiComponent }

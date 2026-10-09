@@ -153,6 +153,32 @@ namespace Tripwire.Tests
                 flip.actions.Add(new KAction { actionId = "Variable.Toggle", args = { new KArg { stringValue = "扉が開いている" } } });
                 t.events.Insert(0, flip);
             }
+            // TW_API=1: the wider Udon API (an out parameter, a callback to this trigger, an enum as a number, part of a
+            // position) and the Calculate / Get Component actions.
+            if (System.Environment.GetEnvironmentVariable("TW_API") == "1")
+            {
+                t.events.Clear(); t.variables.Clear();
+                foreach (var (n, type) in new[] { ("文字", "System.String"), ("数", "System.Int32"), ("読めた", "System.Boolean"), ("位置", "UnityEngine.Vector3"), ("手", "System.Int32"), ("体", "UnityEngine.Rigidbody") })
+                    t.variables.Add(new KVariable { name = n, typeName = type });
+                KAction Call(CallSpec c, string result, params KArg[] args)
+                {
+                    var a = new KAction { actionId = ActionCatalog.CallId, method = c.UdonName, resultVariable = result ?? "" };
+                    a.args.AddRange(args);
+                    return a;
+                }
+                var parse = UdonApi.All.First(c => c.DeclaringType == "System.Int32" && c.Member == "TryParse" && c.Params.Count == 2);
+                var hand = UdonApi.All.First(c => c.DeclaringType == "VRC.SDK3.Components.VRCPickup" && c.Member == "currentHand" && c.Kind == CallKind.Get);
+                var setY = UdonApi.All.First(c => c.DeclaringType == "UnityEngine.Vector3" && c.Member == "y" && c.Kind == CallKind.Set);
+                var load = UdonApi.All.First(c => c.DeclaringType == "VRC.SDK3.StringLoading.VRCStringDownloader" && c.Member == "LoadUrl");
+                var e = new KEvent { eventId = "Interact", interactText = "Try", expanded = true };
+                e.actions.Add(Call(parse, "読めた", new KArg { source = KArgSource.Variable, name = "文字" }, new KArg { source = KArgSource.Variable, name = "数" }));
+                e.actions.Add(new KAction { actionId = ActionCatalog.CalculateId, args = { new KArg { stringValue = "数" }, new KArg { source = KArgSource.Variable, name = "数" }, new KArg { intValue = 2 }, new KArg { intValue = 3 } } });
+                e.actions.Add(Call(setY, null, new KArg { source = KArgSource.Variable, name = "位置" }, new KArg { floatValue = 1.5f }));
+                e.actions.Add(Call(hand, "手", new KArg { source = KArgSource.Self }));
+                e.actions.Add(new KAction { actionId = ActionCatalog.GetComponentId, args = { new KArg { stringValue = "体" }, new KArg { source = KArgSource.Self }, new KArg { intValue = 1 } } });
+                e.actions.Add(Call(load, null, new KArg(), new KArg { source = KArgSource.Self }));
+                t.events.Add(e);
+            }
             // TW_EMPTY=1: a freshly added trigger (the empty state).
             if (System.Environment.GetEnvironmentVariable("TW_EMPTY") == "1") { t.events.Clear(); t.variables.Clear(); t.comment = ""; }
             // TW_PERF=1: a trigger eight times as large, and the time per Inspector pass written to Logs/inspector-perf.txt.
@@ -268,6 +294,9 @@ namespace Tripwire.Tests
                     var g = TripwireCompiler.Generate(trigger);
                     File.WriteAllText("Logs/inspector-perf.txt", "events " + trigger.events.Count + "\nlayout ms (median of 60): " + Median(layoutMs).ToString("F2") + "\nrepaint ms (median): " + Median(repaintMs).ToString("F2")
                         + "\nGenerate ms: " + Time(() => TripwireCompiler.Generate(trigger)).ToString("F2")
+                        + "\n  ToProgram ms: " + Time(() => TripwireModel.ToProgram(trigger)).ToString("F2")
+                        + "\n  CodeGenerator.Generate ms: " + Time(() => CodeGenerator.Generate(TripwireModel.ToProgram(trigger))).ToString("F2")
+                        + "\n  AddSceneWarnings ms: " + Time(() => TripwireLoops.AddSceneWarnings(trigger, g)).ToString("F2")
                         + "\nGetState ms: " + Time(() => TripwireCompiler.GetState(trigger, g)).ToString("F2")
                         + "\nVariableType x all vars ms: " + Time(() => { foreach (var v in trigger.variables) TripwireModel.VariableType(v); }).ToString("F3") + "\n");
                 }

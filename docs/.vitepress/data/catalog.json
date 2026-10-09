@@ -4914,6 +4914,119 @@
       "hasConditions": false
     },
     {
+      "id": "Variable.Calculate",
+      "category": "Variable",
+      "code": "Variable.Calculate",
+      "name": {
+        "ja": "計算して変数に入れる",
+        "en": "Calculate"
+      },
+      "description": {
+        "ja": "A と B を + − × ÷ %（余り）で計算して、変数に入れます。数・位置・色を計算でき、文字は + でつなげられます。",
+        "en": "Put A + - × ÷ B into a variable: numbers, positions (Vector2/3) and colors; text joins with +."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "A",
+            "en": "A"
+          },
+          "type": {
+            "ja": "数",
+            "en": "Number"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "計算",
+            "en": "Operator"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "B",
+            "en": "B"
+          },
+          "type": {
+            "ja": "数",
+            "en": "Number"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Variable.GetComponent",
+      "category": "Variable",
+      "code": "Variable.GetComponent",
+      "name": {
+        "ja": "コンポーネントを取り出す",
+        "en": "Get Component"
+      },
+      "description": {
+        "ja": "オブジェクト（またはその子や親）のコンポーネントを、オブジェクトの変数に入れます。どのコンポーネントかは、変数の型で決まります。",
+        "en": "Put a component of an object, or of its children or parents, into an object variable: the variable's type says which component."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "取り出すもと",
+            "en": "Object"
+          },
+          "type": {
+            "ja": "オブジェクト",
+            "en": "Object"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "探す場所",
+            "en": "Look in"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
       "id": "Video.PlayUrl",
       "category": "Video",
       "code": "Video.PlayUrl",

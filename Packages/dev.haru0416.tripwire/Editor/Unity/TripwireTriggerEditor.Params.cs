@@ -20,7 +20,7 @@ namespace Tripwire.Editor
 
             if (prm.Choices != null)
             {
-                var choices = prm.Name == "broadcast" ? Texts.BroadcastChoices : prm.Choices;
+                var choices = prm.Name == "broadcast" ? Texts.BroadcastChoices : prm.Name == "where" ? Texts.WhereChoices : prm.Choices;
                 arg.intValue = EditorGUILayout.Popup(label, arg.intValue, choices);
                 return;
             }
@@ -300,7 +300,7 @@ namespace Tripwire.Editor
             var sources = new List<KArgSource> { KArgSource.Objects };
             var names = new List<string> { null };
             // "This object" works for the GameObject itself and for anything GetComponent can find on it.
-            bool selfOk = type.IsComponent || type.UnityType == "UnityEngine.GameObject" || type.UnityType == "UnityEngine.Transform" || type.UnityType == "VRC.Udon.UdonBehaviour";
+            bool selfOk = type.IsComponent || type.UnityType == "UnityEngine.GameObject" || type.UnityType == "UnityEngine.Transform" || type.UnityType == ParamType.Behaviour;
             if (selfOk)
             {
                 options.Add(T("This object", "このオブジェクト"));

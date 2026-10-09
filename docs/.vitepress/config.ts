@@ -1,4 +1,6 @@
-import { defineConfig, type DefaultTheme } from "vitepress";
+import { defineConfig, type DefaultTheme, type HeadConfig } from "vitepress";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 // The Tripwire manual. Japanese at /, English at /en/. Reference pages are built from .vitepress/data/catalog.json,
 // which is written from the editor's own catalog (bun run data), so they match what the Inspector shows.
@@ -115,6 +117,44 @@ function sidebarEn(): DefaultTheme.SidebarItem[] {
 
 // Where the site is served: "/" on its own domain, "/tripwire/" on GitHub Pages' project URL (set by the workflow).
 const base = process.env.DOCS_BASE ?? "/";
+// The site's origin, for link cards (Open Graph needs absolute URLs).
+const origin = process.env.DOCS_ORIGIN ?? "https://haru0416-dev.github.io";
+
+const siteDescription = {
+  ja: "VRChat のギミックを Inspector で組み立てる Unity エディタ拡張",
+  en: "A Unity editor extension for building VRChat gimmicks in the Inspector",
+};
+
+// Each event and action page describes itself with its one-line description from the catalog.
+const catalog = JSON.parse(readFileSync(join(__dirname, "data", "catalog.json"), "utf8"));
+const entryDescriptions = new Map<string, { ja: string; en: string }>(
+  [...catalog.events, ...catalog.actions].map((e: { id: string; description: { ja: string; en: string } }) => [e.id, e.description]),
+);
+
+/** Link-card tags for a page: its title and description, the site's card image in its language. */
+function linkCard(page: { title: string; description: string; relativePath: string; params?: Record<string, string> }): HeadConfig[] {
+  const lang = page.relativePath.startsWith("en/") ? "en" : "ja";
+  const path = page.relativePath.replace(/(^|\/)index\.md$/, "$1").replace(/\.md$/, "");
+  const url = origin + base + path;
+  const title = page.title && page.title !== "Tripwire" ? page.title + " | Tripwire" : "Tripwire";
+  const description = (page.params?.key && entryDescriptions.get(page.params.key)?.[lang]) || page.description || siteDescription[lang];
+  const image = origin + base + "og-" + lang + ".png";
+  return [
+    ["meta", { property: "og:type", content: path === "" || path === "en/" ? "website" : "article" }],
+    ["meta", { property: "og:site_name", content: "Tripwire" }],
+    ["meta", { property: "og:title", content: title }],
+    ["meta", { property: "og:description", content: description }],
+    ["meta", { property: "og:url", content: url }],
+    ["meta", { property: "og:image", content: image }],
+    ["meta", { property: "og:image:width", content: "1200" }],
+    ["meta", { property: "og:image:height", content: "630" }],
+    ["meta", { property: "og:locale", content: lang === "ja" ? "ja_JP" : "en_US" }],
+    ["meta", { name: "twitter:card", content: "summary_large_image" }],
+    ["meta", { name: "twitter:title", content: title }],
+    ["meta", { name: "twitter:description", content: description }],
+    ["meta", { name: "twitter:image", content: image }],
+  ];
+}
 
 export default defineConfig({
   title: "Tripwire",
@@ -128,6 +168,7 @@ export default defineConfig({
     ["link", { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" }],
   ],
   srcExclude: ["README.md", "node_modules/**"],
+  transformHead: ({ pageData }) => linkCard(pageData),
 
   locales: {
     root: {

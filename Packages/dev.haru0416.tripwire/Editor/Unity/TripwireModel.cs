@@ -164,6 +164,19 @@ namespace Tripwire.Editor
                         if (prm.VariableRef && arg.stringValue == from) { n++; if (write) arg.stringValue = to; }
                         if (prm.Template && RenameInTemplate(arg.stringValue, from, "\u0001") != arg.stringValue) { n++; if (write) arg.stringValue = RenameInTemplate(arg.stringValue, from, to); }
                     }
+                    // A call reporting back to this trigger that writes one of its variables by name (VRCTween's variableName).
+                    var call = a.actionId == ActionCatalog.CallId ? UdonApi.Get(a.method) : null;
+                    if (call != null)
+                    {
+                        int first = call.Instance != null ? 1 : 0;
+                        bool backHere = call.Params.Where((x, i) => x.Type.IsBehaviour && first + i < a.args.Count && a.args[first + i]?.source == KArgSource.Self).Any();
+                        for (int i = 0; i < call.Params.Count && backHere; i++)
+                        {
+                            var named = first + i < a.args.Count ? a.args[first + i] : null;
+                            if (call.Params[i].Name == "variableName" && named != null && named.source == KArgSource.Constant && named.stringValue == from)
+                            { n++; if (write) named.stringValue = to; }
+                        }
+                    }
                 }
             }
             foreach (var o in others ?? Enumerable.Empty<TripwireTrigger>())
@@ -332,7 +345,10 @@ namespace Tripwire.Editor
             if (prm.Type != null) return prm.Type;
             if (a.actionId == ActionCatalog.SetRemoteId) return RemoteType(a); // the value takes the other trigger's variable's type
             var varName = a.args.Count > 0 ? a.args[0].stringValue : null;
-            return VariableType(t, varName);
+            var type = VariableType(t, varName);
+            if (a.actionId == ActionCatalog.CalculateId && prm.Name == "b" && a.args.Count > 2)
+                return CodeGenerator.CalculateOperandB(type, (ActionCatalog.CalcOp)a.args[2].intValue);
+            return type;
         }
 
         /// <summary>Argument types of a call in order: [instance,] then parameters.</summary>
