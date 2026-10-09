@@ -62,6 +62,23 @@ namespace Tripwire.Tests
         }
 
         [Test]
+        public void AVariableATweenWritesByNameIsAUseAndFollowsARename()
+        {
+            // VRCTween.TweenFloat(..., this trigger, variableName "x", ...): x is used there, so it isn't "unused".
+            a = new GameObject("A");
+            var t = a.AddComponent<TripwireTrigger>();
+            t.variables.Add(new KVariable { name = "x", typeName = "System.Single" });
+            var tween = UdonApi.All.First(c => c.DeclaringType == "VRC.SDK3.Components.VRCTween" && c.Member == "TweenFloat" && c.Params.Any(p => p.Name == "variableName"));
+            var call = new KAction { actionId = ActionCatalog.CallId, method = tween.UdonName };
+            foreach (var p in tween.Params)
+                call.args.Add(p.Type.IsBehaviour ? new KArg { source = KArgSource.Self } : p.Name == "variableName" ? new KArg { stringValue = "x" } : new KArg());
+            t.events.Add(new KEvent { eventId = "Interact", actions = { call } });
+            Assert.AreEqual(1, TripwireModel.CountVariableUses(t, "x", new[] { t }));
+            Assert.IsTrue(TripwireModel.RenameVariable(t, "x", "brightness", new[] { t }));
+            Assert.AreEqual("brightness", call.args[tween.Params.FindIndex(p => p.Name == "variableName")].stringValue);
+        }
+
+        [Test]
         public void NothingMovesWhenNamesWouldMix()
         {
             a = new GameObject("A");

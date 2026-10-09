@@ -70,6 +70,63 @@ public class GeneratorFixTests
     }
 
     [Fact]
+    public void ACallThatOnlyReadsAStructIsNotStoredBack()
+    {
+        // n = n.CompareTo(5) on a synced Integer: the result stays (nothing copies the old value back over it).
+        var p = new TriggerProgram();
+        p.Variables.Add(new VariableDecl { Name = "n", Kind = ValueKind.Int, Initial = 0, Synced = true });
+        p.Variables.Add(new VariableDecl { Name = "s", Kind = ValueKind.String, Initial = "" });
+        var compare = new CallSpec { UdonName = "SystemInt32.__CompareTo__SystemInt32__SystemInt32", DeclaringType = "System.Int32", Member = "CompareTo", Kind = CallKind.Method,
+            Instance = ParamType.Of(ValueKind.Int), InstanceIsStruct = true, Params = { new EventParam("value", ParamType.Of(ValueKind.Int)) }, Returns = ParamType.Of(ValueKind.Int) };
+        // float.ToString on the Integer variable: read as a number, never written back.
+        var toText = new CallSpec { UdonName = "SystemSingle.__ToString__SystemString", DeclaringType = "System.Single", Member = "ToString", Kind = CallKind.Method,
+            Instance = ParamType.Of(ValueKind.Float), InstanceIsStruct = true, Returns = ParamType.Of(ValueKind.String) };
+        p.Events.Add(new EventBlock { EventId = "Interact", Actions = {
+            new ActionCall { ActionId = ActionCatalog.CallId, Call = compare, Args = { ArgValue.Var("n"), ArgValue.Const(5) }, ResultVariable = "n" },
+            new ActionCall { ActionId = ActionCatalog.CallId, Call = toText, Args = { ArgValue.Var("n") }, ResultVariable = "s" } } });
+        var src = Flat(p);
+        Assert.Contains("Tw_Set_n(v_n.CompareTo(5));", src);
+        Assert.DoesNotContain("tw_V", src);
+    }
+
+    [Fact]
+    public void AStructSetterInAFrequentEventCountsAsChangingTheSyncedVariable()
+    {
+        var p = new TriggerProgram();
+        p.Variables.Add(new VariableDecl { Name = "pos", Kind = ValueKind.Vector3, Initial = new float[3], Synced = true });
+        var setY = new CallSpec { UdonName = "UnityEngineVector3.__set_y__SystemSingle", DeclaringType = "UnityEngine.Vector3", Member = "y", Kind = CallKind.Set,
+            Instance = ParamType.Of(ValueKind.Vector3), InstanceIsStruct = true, Params = { new EventParam("value", ParamType.Of(ValueKind.Float)) } };
+        var call = new ActionCall { ActionId = ActionCatalog.CallId, Call = setY, Args = { ArgValue.Var("pos"), ArgValue.Const(1f) } };
+        Assert.Equal(new[] { "pos" }, call.CallOutputs().ToArray());
+        p.Events.Add(new EventBlock { EventId = "Update", Actions = { call } });
+        Assert.Contains(CodeGenerator.Generate(p).Diagnostics, d => d.Severity == Severity.Warning && d.Message.Contains("同期する変数を変えると"));
+    }
+
+    [Fact]
+    public void GetComponentInItsOwnChangeBlockIsNotALoop()
+    {
+        var p = new TriggerProgram();
+        var body = ParamType.Object("UnityEngine.Rigidbody"); body.IsComponent = true;
+        p.Variables.Add(new VariableDecl { Name = "body", Type = body });
+        p.Events.Add(new EventBlock { EventId = EventCatalog.VariableChangedId, Name = "body", Actions = {
+            new ActionCall { ActionId = ActionCatalog.GetComponentId, Args = { ArgValue.Const("body"), ArgValue.SelfObject(), ArgValue.Const(0) } } } });
+        Assert.DoesNotContain(CodeGenerator.Generate(p).Diagnostics, d => d.Message.Contains("止まらずに続きます"));
+    }
+
+    [Fact]
+    public void AStructSetterOnAPlainVariableIsStoredBackAndNeedsAVariable()
+    {
+        var p = new TriggerProgram();
+        p.Variables.Add(new VariableDecl { Name = "pos", Kind = ValueKind.Vector3, Initial = new float[3] });
+        var setY = new CallSpec { UdonName = "UnityEngineVector3.__set_y__SystemSingle__SystemVoid", DeclaringType = "UnityEngine.Vector3", Member = "y", Kind = CallKind.Set,
+            Instance = ParamType.Of(ValueKind.Vector3), InstanceIsStruct = true, Params = { new EventParam("value", ParamType.Of(ValueKind.Float)) } };
+        p.Events.Add(new EventBlock { EventId = "Interact", Actions = { new ActionCall { ActionId = ActionCatalog.CallId, Call = setY, Args = { ArgValue.Var("pos"), ArgValue.Const(3f) } } } });
+        Assert.Contains("{ UnityEngine.Vector3 tw_V = v_pos; tw_V.y = 3f; v_pos = tw_V; }", Flat(p).Replace("{ Vector3 ", "{ UnityEngine.Vector3 "));
+        var constant = new TriggerProgram { Events = { new EventBlock { EventId = "Interact", Actions = { new ActionCall { ActionId = ActionCatalog.CallId, Call = setY, Args = { ArgValue.Const(new float[3]), ArgValue.Const(3f) } } } } } };
+        Assert.Contains(CodeGenerator.Generate(constant).Diagnostics, d => d.Severity == Severity.Error && d.Message.Contains("対象を変数にしてください"));
+    }
+
+    [Fact]
     public void OnlyCallsThatChangeAVariableInPlaceAreWarned()
     {
         // A synced string's ToLower changes nothing; a synced array's SetValue changes it without the setter.

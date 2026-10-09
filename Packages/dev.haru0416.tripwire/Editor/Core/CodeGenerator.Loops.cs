@@ -46,8 +46,7 @@ namespace Tripwire.Core
                     }
                     if (a.ActionId == ActionCatalog.SendEventDelayedId && ToSelf && a.Args.Count > 1 && a.Args[1]?.Constant is string later)
                         To(e => e.EventId == EventCatalog.CustomId && e.Name == later, LinkKind.Delayed);
-                    if ((a.ActionId == ActionCatalog.ToggleVariableId || a.ActionId == ActionCatalog.AddVariableId || a.ActionId == ActionCatalog.RandomVariableId)
-                        && a.Args.Count > 0 && a.Args[0]?.Constant is string changed)
+                    if (ActionCatalog.Get(a.ActionId)?.ChangesValueEachTime == true && a.Args.Count > 0 && a.Args[0]?.Constant is string changed)
                         To(e => e.EventId == EventCatalog.VariableChangedId && e.Name == changed, LinkKind.Immediate);
                 }
             }
@@ -121,7 +120,16 @@ namespace Tripwire.Core
                 EventLink First(List<int> cycle, LinkKind[] kinds) =>
                     links.First(l => l.From == cycle[0] && l.To == cycle[cycle.Count > 1 ? 1 : 0] && kinds.Contains(l.Kind));
 
-                var immediate = Cycles(Enumerable.Range(0, p.Events.Count), i => links.Where(l => l.From == i && l.Kind == LinkKind.Immediate).Select(l => l.To));
+                // Each block's next blocks, listed once: the search asks for them at every step (thousands of times).
+                System.Func<int, IEnumerable<int>> Next(params LinkKind[] kinds)
+                {
+                    var next = new List<int>[p.Events.Count];
+                    for (int i = 0; i < next.Length; i++) next[i] = new List<int>();
+                    foreach (var l in links)
+                        if (kinds.Contains(l.Kind) && !next[l.From].Contains(l.To)) next[l.From].Add(l.To);
+                    return i => next[i];
+                }
+                var immediate = Cycles(Enumerable.Range(0, p.Events.Count), Next(LinkKind.Immediate));
                 foreach (var c in immediate)
                     Warn(c.Count == 1
                             ? Texts.T("This block runs itself again right away, without end. Unless a condition stops it, Udon stops this trigger for good. Delay it, or add a condition that stops it.",
@@ -131,7 +139,7 @@ namespace Tripwire.Core
                          c[0], First(c, new[] { LinkKind.Immediate }).Act);
 
                 var sends = new[] { LinkKind.Immediate, LinkKind.Network };
-                foreach (var c in Cycles(Enumerable.Range(0, p.Events.Count), i => links.Where(l => l.From == i && sends.Contains(l.Kind)).Select(l => l.To)))
+                foreach (var c in Cycles(Enumerable.Range(0, p.Events.Count), Next(sends)))
                 {
                     if (immediate.Any(x => x.SequenceEqual(c))) continue;
                     Warn(c.Count == 1
@@ -143,16 +151,17 @@ namespace Tripwire.Core
                 }
 
                 // A block that comes back to itself by two or more calls doubles its runs each time.
+                var anyLink = Next(LinkKind.Immediate, LinkKind.Network, LinkKind.Delayed);
                 for (int i = 0; i < p.Events.Count; i++)
                 {
-                    var back = links.Where(l => l.From == i && Reaches(links, l.To, i)).ToList();
+                    var back = links.Where(l => l.From == i && Reaches(anyLink, l.To, i)).ToList();
                     if (back.Count >= 2 && back.Any(l => l.Kind == LinkKind.Delayed))
                         Warn(Texts.T(Name(i) + " schedules itself more than once each time it runs, so the scheduled runs double every round.",
                                      Name(i) + " は、動くたびに自分をまた 2 回以上呼ぶので、予約が倍々に増えていきます。"), i, back[1].Act);
                 }
             }
 
-            static bool Reaches(List<EventLink> links, int from, int to)
+            static bool Reaches(System.Func<int, IEnumerable<int>> next, int from, int to)
             {
                 var seen = new HashSet<int>();
                 var stack = new Stack<int>();
@@ -162,7 +171,7 @@ namespace Tripwire.Core
                     int at = stack.Pop();
                     if (at == to) return true;
                     if (!seen.Add(at)) continue;
-                    foreach (var l in links) if (l.From == at) stack.Push(l.To);
+                    foreach (var n in next(at)) stack.Push(n);
                 }
                 return false;
             }

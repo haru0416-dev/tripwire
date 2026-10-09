@@ -153,25 +153,23 @@ namespace Tripwire.Core
                     if (a.ActionId == "Networking.TakeOwnership")
                         Once("owner", k, "Taking ownership many times a second makes players who run this at the same time take it from each other again and again.",
                              "1\u00A0秒に何度もオーナーになろうとすると、同時に動いている人どうしでオーナーを取り合い続けます。");
-                    var changed = ChangedVariable(a);
-                    if (changed != null && vars.TryGetValue(changed, out var cv) && cv.Synced)
+                    if (a.ActionId == ActionCatalog.GetComponentId)
+                        Once("getcomponent", k, "Getting a component many times a second is slow in Udon. Get it once (in Start) into a variable and use that.",
+                             "1\u00A0秒に何度もコンポーネントを取り出すと、Udon では重くなります。「開始したとき」に一度取り出して変数に入れ、それを使ってください。");
+                    if (ChangedVariables(a).Any(changed => vars.TryGetValue(changed, out var cv) && cv.Synced))
                         Once("sync", k, "Changing a synced variable many times a second sends it each time it changes, which can delay other sync. Change it on a less frequent event.",
                              "1\u00A0秒に何度も同期する変数を変えると、変わるたびに送信され、ほかの同期が遅れることがあります。もっと少ない回数のイベントで変えてください。");
                 }
             }
 
-            /// <summary>The trigger variable an action writes, or null.</summary>
-            static string ChangedVariable(ActionCall a)
+            /// <summary>The trigger variables an action writes.</summary>
+            static IEnumerable<string> ChangedVariables(ActionCall a)
             {
-                switch (a.ActionId)
-                {
-                    case ActionCatalog.SetVariableId: case ActionCatalog.ToggleVariableId: case ActionCatalog.AddVariableId: case ActionCatalog.RandomVariableId:
-                        return a.Args.Count > 0 ? a.Args[0]?.Constant as string : null;
-                    case ActionCatalog.GetRemoteId:
-                        return a.Args.Count > 2 ? a.Args[2]?.Constant as string : null;
-                    default:
-                        return a.ResultVariable;
-                }
+                if (a.ActionId == ActionCatalog.GetRemoteId)
+                    return a.Args.Count > 2 && a.Args[2]?.Constant is string into ? new[] { into } : new string[0];
+                if (ActionCatalog.Get(a.ActionId)?.WritesVariable == true)
+                    return a.Args.Count > 0 && a.Args[0]?.Constant is string name ? new[] { name } : new string[0];
+                return a.CallOutputs();
             }
 
             void EmitEntries(EventSpec[] specs)

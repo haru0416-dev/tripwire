@@ -50,52 +50,107 @@ namespace Tripwire.Core
             /// <summary>
             /// A local event body called from one place only (and without a Return inside) is written into that place,
             /// saving a call per event: "if (fail) return;" becomes "if (!fail) { … }", and the body gets its own braces
-            /// so locals of different events can't clash.
+            /// so locals of different events can't clash. The methods are split once and edited as pieces, with plain
+            /// string searches: re-splitting and regex counting the whole code per inlined body grew with the square of
+            /// the trigger's size (a quarter second for 70 events under the editor's Mono).
             /// </summary>
             void InlineSingleUseBodies()
             {
-                var code = methods.ToString();
-                if (SplitMethods(code) == null) return; // an unexpected shape: leave it as it is
-                for (bool changed = true; changed;)
+                var pieces = SplitMethods(methods.ToString());
+                if (pieces == null) return; // an unexpected shape: leave it as it is
+                for (int mi = 0; mi < pieces.Count; mi++)
                 {
-                    changed = false;
-                    var pieces = SplitMethods(code);
-                    if (pieces == null) break;
-                    foreach (var method in pieces)
+                    var method = pieces[mi];
+                    var head = BodyHead.Match(method);
+                    if (!head.Success) continue;
+                    var name = head.Groups[1].Value;
+                    // Its own declaration and exactly one call, in another method.
+                    int uses = 0, caller = -1;
+                    for (int pi = 0; pi < pieces.Count && uses <= 2; pi++)
                     {
-                        var head = System.Text.RegularExpressions.Regex.Match(method, @"^        void (_Tw_E\d+)\(\)\n        \{\n(.*)\n        \}\n\n$", System.Text.RegularExpressions.RegexOptions.Singleline);
-                        if (!head.Success) continue;
-                        var name = head.Groups[1].Value;
-                        var calls = System.Text.RegularExpressions.Regex.Matches(code, @"\b" + name + @"\b");
-                        if (calls.Count != 2) continue; // its own declaration and exactly one call
-                        var call = System.Text.RegularExpressions.Regex.Match(code, @"\n( +)" + name + @"\(\);\n");
-                        if (!call.Success) continue; // called as part of a longer line (a player filter): keep the call
-                        var lines = head.Groups[2].Value.Split('\n').ToList();
-                        string test = null, stopped = null;
-                        var guard = System.Text.RegularExpressions.Regex.Match(lines[0], @"^            if \((.*)\) (?:\{ (if \(" + TraceFlag + @"\) Tw_Trace\(.*\);) return; \}|return;)$");
-                        if (guard.Success) { test = guard.Groups[1].Value; stopped = guard.Groups[2].Success ? guard.Groups[2].Value : null; lines.RemoveAt(0); }
-                        if (lines.Any(l => System.Text.RegularExpressions.Regex.IsMatch(l, @"\breturn;"))) continue; // a Return would leave the caller
-                        var indent = call.Groups[1].Value;
-                        var inner = string.Concat(lines.Select(l => indent + "    " + l.Substring(Math.Min(12, l.Length - l.TrimStart().Length)) + "\n"));
-                        string block;
-                        if (test != null)
-                        {
-                            // The opposite of the fail test, without double negations where it's easy.
-                            var plain = System.Text.RegularExpressions.Regex.IsMatch(test, @"^!?[\w.]+$");
-                            var holds = plain ? (test.StartsWith("!") ? test.Substring(1) : "!" + test)
-                                      : test.StartsWith("!(") && test.EndsWith(")") && Balanced(test.Substring(2, test.Length - 3)) ? test.Substring(2, test.Length - 3)
-                                      : "!(" + test + ")";
-                            block = indent + "if (" + holds + ")\n" + indent + "{\n" + inner + indent + "}\n";
-                            if (stopped != null) block += indent + "else " + stopped + "\n";
-                        }
-                        else block = indent + "{\n" + inner + indent + "}\n";
-                        code = code.Remove(call.Index + 1, call.Length - 1).Insert(call.Index + 1, block);
-                        code = code.Replace(method, "");
-                        changed = true;
-                        break;
+                        int n = CountName(pieces[pi], name);
+                        uses += n;
+                        if (n > 0 && pi != mi) caller = pi;
                     }
+                    if (uses != 2 || caller < 0) continue;
+                    var callerText = pieces[caller];
+                    int lineStart = CallLine(callerText, name, out var indent);
+                    if (lineStart < 0) continue; // called as part of a longer line (a player filter): keep the call
+                    var lines = head.Groups[2].Value.Split('\n').ToList();
+                    string test = null, stopped = null;
+                    var guard = BodyGuard.Match(lines[0]);
+                    if (guard.Success) { test = guard.Groups[1].Value; stopped = guard.Groups[2].Success ? guard.Groups[2].Value : null; lines.RemoveAt(0); }
+                    if (lines.Any(l => CountName(l, "return;") > 0)) continue; // a Return would leave the caller
+                    var inner = string.Concat(lines.Select(l => indent + "    " + l.Substring(Math.Min(12, l.Length - l.TrimStart().Length)) + "\n"));
+                    string block;
+                    if (test != null)
+                    {
+                        // The opposite of the fail test, without double negations where it's easy.
+                        var plain = PlainTest.IsMatch(test);
+                        var holds = plain ? (test.StartsWith("!") ? test.Substring(1) : "!" + test)
+                                  : test.StartsWith("!(") && test.EndsWith(")") && Balanced(test.Substring(2, test.Length - 3)) ? test.Substring(2, test.Length - 3)
+                                  : "!(" + test + ")";
+                        block = indent + "if (" + holds + ")\n" + indent + "{\n" + inner + indent + "}\n";
+                        if (stopped != null) block += indent + "else " + stopped + "\n";
+                    }
+                    else block = indent + "{\n" + inner + indent + "}\n";
+                    int lineEnd = lineStart + indent.Length + name.Length + "();\n".Length;
+                    pieces[caller] = callerText.Remove(lineStart, lineEnd - lineStart).Insert(lineStart, block);
+                    pieces.RemoveAt(mi);
+                    // Look again from the start: a body that held this call may now be single-use itself.
+                    mi = -1;
                 }
-                methods.Clear().Append(code);
+                methods.Clear().Append(string.Concat(pieces));
+            }
+
+            static readonly System.Text.RegularExpressions.Regex BodyHead =
+                new System.Text.RegularExpressions.Regex(@"^        void (_Tw_E\d+)\(\)\n        \{\n(.*)\n        \}\n\n$", System.Text.RegularExpressions.RegexOptions.Singleline);
+            static readonly System.Text.RegularExpressions.Regex BodyGuard =
+                new System.Text.RegularExpressions.Regex(@"^            if \((.*)\) (?:\{ (if \(" + TraceFlag + @"\) Tw_Trace\(.*\);) return; \}|return;)$");
+            static readonly System.Text.RegularExpressions.Regex PlainTest = new System.Text.RegularExpressions.Regex(@"^!?[\w.]+$");
+
+            /// <summary>A word character as regex \w and \b see it: letters, combining marks, digits, connectors, ZWNJ / ZWJ.</summary>
+            static bool IsWordChar(char c)
+            {
+                if (c == '\u200C' || c == '\u200D') return true;
+                switch (char.GetUnicodeCategory(c))
+                {
+                    case System.Globalization.UnicodeCategory.UppercaseLetter: case System.Globalization.UnicodeCategory.LowercaseLetter:
+                    case System.Globalization.UnicodeCategory.TitlecaseLetter: case System.Globalization.UnicodeCategory.ModifierLetter:
+                    case System.Globalization.UnicodeCategory.OtherLetter: case System.Globalization.UnicodeCategory.NonSpacingMark:
+                    case System.Globalization.UnicodeCategory.DecimalDigitNumber: case System.Globalization.UnicodeCategory.ConnectorPunctuation:
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+
+            /// <summary>How often <paramref name="name"/> occurs as a whole word (as \b…\b would match it).</summary>
+            static int CountName(string text, string name)
+            {
+                int n = 0;
+                for (int i = text.IndexOf(name, StringComparison.Ordinal); i >= 0; i = text.IndexOf(name, i + 1, StringComparison.Ordinal))
+                {
+                    bool before = i == 0 || !IsWordChar(text[i - 1]) || !IsWordChar(name[0]);
+                    int after = i + name.Length;
+                    bool behind = after >= text.Length || !IsWordChar(text[after]) || !IsWordChar(name[name.Length - 1]);
+                    if (before && behind) n++;
+                }
+                return n;
+            }
+
+            /// <summary>Where the line that is just "&lt;indent&gt;name();" starts (after its newline), or -1.</summary>
+            static int CallLine(string text, string name, out string indent)
+            {
+                indent = null;
+                var call = name + "();\n";
+                for (int i = text.IndexOf(call, StringComparison.Ordinal); i >= 0; i = text.IndexOf(call, i + 1, StringComparison.Ordinal))
+                {
+                    int s = i;
+                    while (s > 0 && text[s - 1] == ' ') s--;
+                    if (s < i && s > 0 && text[s - 1] == '\n') { indent = text.Substring(s, i - s); return s; }
+                }
+                return -1;
             }
 
             static bool Balanced(string s)

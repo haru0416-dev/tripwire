@@ -20,6 +20,11 @@ The status at the top of the Inspector counts problems. **Show them** opens only
 | A Custom event already uses this name. | Rename one of them |
 | Pick one of this trigger's timers… | Name the timer event and pick that name |
 | A '{' without '}'… | To write `{` as a character, double it |
+| … can't be synced. Sync numbers, text, positions or colors instead. | Turn off syncing for that variable; sync a number or text variable for what everyone should share |
+| … has no '…': pick another. | Pick again from the field's list; this shows when an SDK update renamed it |
+| Pick the variable that receives '…'. | In **Call Udon API**, pick a variable of the right type in the **(result)** field |
+| To change part of a …, make the target a variable. | Make a position or color variable and pick it as the target; the changed value goes into it |
+| A trigger's Custom events take no values, so they can't receive this network event… | Put the values in synced variables, then send an event without values |
 
 ## "Use Only my screen"
 

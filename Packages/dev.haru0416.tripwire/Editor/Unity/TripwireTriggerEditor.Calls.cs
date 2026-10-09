@@ -44,7 +44,8 @@ namespace Tripwire.Editor
                     if (named == null) continue; // an internal parameter: the preset's default stays
                     label = T(named.Value.En, named.Value.Ja);
                 }
-                DrawTypedParam(label, eventSpec, types[k], a.args[k]);
+                if (pi >= 0 && c.Params[pi].Receives) DrawOutputParam(label, c.Params[pi], a.args[k]);
+                else DrawTypedParam(label, eventSpec, types[k], a.args[k]);
                 int kk = k;
                 DrawDiagnostics(d => d.Event == ei && d.Action == ai && d.Arg == kk);
             }
@@ -62,7 +63,32 @@ namespace Tripwire.Editor
                     EditorGUILayout.LabelField(label, T("(add a " + Texts.TypeName(c.Returns) + " variable)", "（" + Texts.TypeName(c.Returns) + " の変数を作ってください）"));
                 else
                     a.resultVariable = names[EditorGUILayout.Popup(label, idx, display.ToArray())];
+                // An enum kept as its number: which number is which.
+                var numbers = c.ReturnsEnum != null ? TripwireModel.ResolveType(c.ReturnsEnum) : null;
+                if (numbers != null && numbers.IsEnum)
+                    EditorGUILayout.LabelField(" ", string.Join(", ", Enum.GetValues(numbers).Cast<object>().Select(x => Convert.ToInt64(x) + " = " + x)), EditorStyles.wordWrappedMiniLabel);
             }
+        }
+
+        /// <summary>An `out` / `ref` parameter: the variable that receives the value (for `ref`, also gives it).</summary>
+        void DrawOutputParam(string label, EventParam prm, KArg arg)
+        {
+            var names = t.variables.Where(v =>
+            {
+                var vt = TripwireModel.VariableType(v);
+                return vt != null && CodeGenerator.IsAssignable(vt, prm.Type) && (prm.Pass == ParamPass.Out || CodeGenerator.IsAssignable(prm.Type, vt));
+            }).Select(v => v.name).ToList();
+            label += prm.Pass == ParamPass.Out ? T(" (result)", "（結果）") : T(" (in and out)", "（渡して受け取る）");
+            if (names.Count == 0)
+            {
+                EditorGUILayout.LabelField(label, T("(add a " + Texts.TypeName(prm.Type) + " variable)", "（" + Texts.TypeName(prm.Type) + " の変数を作ってください）"));
+                return;
+            }
+            names.Insert(0, "");
+            int idx = arg.source == KArgSource.Variable ? Math.Max(0, names.IndexOf(arg.name ?? "")) : 0;
+            var display = names.Select(n => n == "" ? T("Choose…", "選んでください…") : n).ToArray();
+            int picked = EditorGUILayout.Popup(label, idx, display);
+            if (picked != idx) { arg.source = KArgSource.Variable; arg.name = names[picked]; }
         }
 
         // ---------------- other U# scripts ----------------
@@ -187,10 +213,14 @@ namespace Tripwire.Editor
         static void ResetCallArgs(KAction a, CallSpec c)
         {
             a.args.Clear();
+            int first = c.Instance != null ? 1 : 0, k = 0;
             foreach (var type in TripwireModel.CallArgTypes(c))
             {
                 var arg = new KArg();
-                if (type.Kind == ValueKind.Object) arg.source = KArgSource.Objects;
+                int pi = k++ - first;
+                if (pi >= 0 && c.Params[pi].Receives) arg.source = KArgSource.Variable; // picked in the Inspector
+                else if (type.IsBehaviour) arg.source = KArgSource.Self; // callbacks come back here
+                else if (type.Kind == ValueKind.Object) arg.source = KArgSource.Objects;
                 else if (type.Kind == ValueKind.Player) arg.source = KArgSource.LocalPlayer;
                 else if (type.Kind == ValueKind.Color) arg.vector4Value = Vector4.one;
                 else if (type.Kind == ValueKind.Enum)

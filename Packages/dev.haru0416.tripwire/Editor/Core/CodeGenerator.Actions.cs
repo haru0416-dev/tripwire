@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Tripwire.Core
 {
-    // Actions: catalog templates, Udon API / script calls, variable actions.
+    // Actions: catalog templates, blocks (If, loops), Send Event, timers. Calls are in CodeGenerator.Calls, variable actions in CodeGenerator.Variables.
     public static partial class CodeGenerator
     {
         sealed partial class Generator
@@ -123,7 +123,7 @@ namespace Tripwire.Core
                     if (s == null) return false;
                     if (s.Special == ActionSpecial.StopEvent) return true;
                     if (s.Special == ActionSpecial.Break && !insideInnerLoop) return true; // a nested loop's Leave leaves that loop only
-                    if (x.ResultVariable != null && read.Contains(x.ResultVariable)) return true;
+                    if (x.CallOutputs().Any(read.Contains)) return true;
                     // Parameters that write a variable (not a list a loop only reads).
                     for (int k = 0; k < s.Params.Length && k < x.Args.Count; k++)
                         if (s.Params[k].VariableRef && s.Params[k].Role != VariableRole.List && x.Args[k]?.Constant is string name && read.Contains(name)) return true;
@@ -135,39 +135,6 @@ namespace Tripwire.Core
                                  "中で条件の変数を変えていないので、終わらないかもしれません（終わらないままだと、このトリガーは以後動かなくなります）。"), ev, act);
                 const string indent = "            ";
                 body.Append(indent).Append("while (").Append(test).Append(")\n").Append(indent).Append("{\n").Append(inner).Append(indent).Append("}\n");
-            }
-
-            /// <summary>
-            /// Set / Read Another Trigger's Variable. Setting puts the value in the other trigger's inbox and calls its
-            /// take method, so the change goes through its own setter (sync, change events); reading takes the field.
-            /// </summary>
-            void EmitRemoteVariable(int ev, EventSpec spec, int act, ActionSpec a, ActionCall call, StringBuilder body)
-            {
-                var target = ObjectOperand(spec, a.Params[0].Type, call.Args[0], ev, act, 0, a.Params[0].Name);
-                if (target == null) return;
-                var name = call.Args[1]?.Source == ArgSource.Constant ? call.Args[1].Constant as string : null;
-                if (string.IsNullOrEmpty(name) || call.RemoteType == null)
-                { Error(Texts.T("Pick one of that trigger's variables.", "ほかのトリガーの変数を選んでください。"), ev, act, 1); return; }
-                if (call.RemoteTemporary)
-                { Error(Texts.T("That variable is temporary (only its own trigger can use it).", "その変数は一時的なので、そのトリガーの中でしか使えません。"), ev, act, 1); return; }
-                string stmt;
-                if (a.Special == ActionSpecial.SetRemoteVariable)
-                {
-                    var value = AnyOperand(spec, call.RemoteType, call.Args[2], ev, act, 2, "value");
-                    if (value == null) return;
-                    target.Guards.AddRange(value.GuardsOfSources());
-                    // Braced: the validity guard must cover both statements.
-                    stmt = "{ " + target.Expr + ".SetProgramVariable(\"" + InboxOf(name) + "\", " + value.Expr + "); " + target.Expr + ".SendCustomEvent(\"" + TakeMethodOf(name) + "\"); }";
-                }
-                else
-                {
-                    var intoName = call.Args[2]?.Source == ArgSource.Constant ? call.Args[2].Constant as string : null;
-                    if (string.IsNullOrEmpty(intoName) || !vars.TryGetValue(intoName, out var into)) { Error(Texts.T("Pick a variable to read into.", "読んだ値を入れる変数を選んでください。"), ev, act, 2); return; }
-                    if (!IsAssignable(into.Type, call.RemoteType)) { Error(TypeMismatch(into, call.RemoteType), ev, act, 2); return; }
-                    stmt = SetStatement(into, "(" + TypeName(call.RemoteType) + ")" + target.Expr + ".GetProgramVariable(\"" + FieldOf(name) + "\")");
-                }
-                body.Append("            ");
-                AppendGuarded(body, "", target.Guards, stmt);
             }
 
             /// <summary>Statements of nested actions, indented one more level.</summary>
@@ -243,7 +210,11 @@ namespace Tripwire.Core
                     case ActionSpecial.ToggleVariable:
                     case ActionSpecial.AddVariable:
                     case ActionSpecial.RandomVariable:
+                    case ActionSpecial.Calculate:
                         EmitVariableAction(ev, spec, act, a, call, body);
+                        return;
+                    case ActionSpecial.GetComponent:
+                        EmitGetComponent(ev, spec, act, call, body);
                         return;
                     default:
                         // A new kind of action needs its own case here (rather than falling into another kind's code).
@@ -324,120 +295,12 @@ namespace Tripwire.Core
                 return expr == null ? null : new Operand { Expr = expr };
             }
 
-            void EmitCall(int ev, EventSpec spec, int act, ActionCall call, StringBuilder body)
-            {
-                var c = call.Call;
-                if (c == null) { Error(Texts.T("Pick an Udon API member.", "呼び出すものを選んでください。"), ev, act); return; }
-                int expected = (c.Instance != null ? 1 : 0) + c.Params.Count;
-                if (call.Args.Count != expected) { Error(ArgCountMismatch(), ev, act); return; }
-
-                var guards = new List<string>();
-                string loopField = null, loopType = null;
-                bool loopMayBeNull = false;
-                string target = c.DeclaringType;
-                int k = 0;
-                if (c.Instance != null)
-                {
-                    var op = c.Instance.Kind == ValueKind.Object && call.Args[0] != null
-                        ? ObjectOperand(spec, c.Instance, call.Args[0], ev, act, 0, "p0", scalarIfSingle: true)
-                        : AnyOperand(spec, c.Instance, call.Args[0], ev, act, 0, "p0");
-                    if (op == null) return;
-                    if (op.ArrayField != null)
-                    {
-                        loopField = op.ArrayField;
-                        loopType = TypeName(c.Instance.Element());
-                        loopMayBeNull = op.ArrayMayBeNull;
-                        target = "tw_T";
-                    }
-                    else
-                    {
-                        // `(float)v_i.ToString()` / `-2f.CompareTo(x)` would bind wrongly: wrap anything that is not a plain name.
-                        target = IsPlainName(op.Expr) ? op.Expr : "(" + op.Expr + ")";
-                        guards.AddRange(op.Guards);
-                    }
-                    k = 1;
-                }
-
-                var args = new List<string>();
-                bool ok = true;
-                for (int i = 0; i < c.Params.Count; i++, k++)
-                {
-                    var op = AnyOperand(spec, c.Params[i].Type, call.Args[k], ev, act, k, "p" + k);
-                    if (op == null) { ok = false; continue; }
-                    if (op.ArrayField != null) { Error(Texts.T("'" + c.Params[i].Name + "' takes a single object.", "「" + c.Params[i].Name + "」にはオブジェクトを 1 つだけ入れてください。"), ev, act, k); ok = false; continue; }
-                    args.Add(AsValue(op.Expr, c.Params[i].Type));
-                    foreach (var gx in op.Guards)
-                        if (!guards.Contains(gx)) guards.Add(gx);
-                }
-                if (!ok) return;
-
-                if (c.Kind == CallKind.Ctor && CheckConstantConstruction != null && call.Args.All(x => x != null && x.Source == ArgSource.Constant))
-                {
-                    var problem = CheckConstantConstruction(c, call.Args);
-                    if (problem != null) { Error(problem, ev, act); return; }
-                }
-
-                string expr;
-                switch (c.Kind)
-                {
-                    case CallKind.Ctor: expr = "new " + c.DeclaringType + "(" + string.Join(", ", args) + ")"; break;
-                    case CallKind.Get: expr = target + "." + c.Member; break;
-                    case CallKind.Set: expr = target + "." + c.Member + " = " + args[0]; break;
-                    default: expr = target + "." + c.Member + "(" + string.Join(", ", args) + ")"; break;
-                }
-
-                // A call that may change the variable it is made on (a property set, a method of a struct): a variable
-                // that goes through a setter (synced or watched) must get the changed value through it, or the change
-                // never reaches others and its change event never runs.
-                VariableDecl onVar = null;
-                if (c.Instance != null && call.Args[0]?.Source == ArgSource.Variable && (c.Kind == CallKind.Set || c.Kind == CallKind.Method)
-                    && vars.TryGetValue(call.Args[0].Name ?? "", out var iv) && NeedsSetter(iv))
-                {
-                    if (IsStructKind(c.Instance.Kind) && !c.Instance.IsArray)
-                    {
-                        onVar = iv;
-                        expr = "tw_V" + expr.Substring(target.Length);
-                    }
-                    // An array's element set in place (SetValue): the variable keeps the same array, so nothing sees a change.
-                    // Other values either can't be changed by their methods (strings, numbers) or are objects whose own
-                    // state changes, which isn't the variable changing.
-                    else if (c.Instance.IsArray && c.Kind == CallKind.Method && c.Member == "SetValue")
-                        Warn(Texts.T("Changing what '" + iv.Name + "' holds this way doesn't count as a change: other players don't get it and its change event doesn't run. Use Set Variable.",
-                                     "変数「" + iv.Name + "」の中身をここで書き換えても変化として扱われず、ほかの人に届かず、「変わったとき」も動きません。「変数を変える」を使ってください。"), ev, act);
-                }
-
-                string stmt;
-                if (!string.IsNullOrEmpty(call.ResultVariable))
-                {
-                    VariableDecl v;
-                    if (c.Returns == null) { Error(Texts.T("This member returns nothing to store.", "これは値を返さないので、変数に入れられません。"), ev, act); return; }
-                    if (!vars.TryGetValue(call.ResultVariable, out v)) { Error(MissingVariable(call.ResultVariable), ev, act); return; }
-                    if (!IsAssignable(v.Type, c.Returns)) { Error(Texts.T("Returns " + Texts.TypeName(c.Returns) + "; variable '" + v.Name + "' is " + Texts.TypeName(v.Type) + ".", "返ってくるのは " + Texts.TypeName(c.Returns) + " ですが、変数「" + v.Name + "」は " + Texts.TypeName(v.Type) + " です。"), ev, act); return; }
-                    if (loopField != null) Warn(Texts.T("With several targets the variable keeps the last target's value.", "対象が複数あるときは、最後の対象の値が変数に残ります。"), ev, act);
-                    stmt = SetStatement(v, expr);
-                }
-                else if (c.Kind == CallKind.Get || c.Kind == CallKind.Ctor)
-                {
-                    Error(Texts.T("Pick a variable to store the value in.", "結果を入れる変数を選んでください。"), ev, act);
-                    return;
-                }
-                else
-                {
-                    stmt = expr + ";";
-                }
-                if (onVar != null)
-                    stmt = "{ " + TypeName(c.Instance) + " tw_V = " + FieldOf(onVar.Name) + "; " + stmt + " " + SetStatement(onVar, "tw_V") + " }";
-                EmitStatement(body, loopField, loopType, guards, stmt, loopMayBeNull);
-            }
-
-            static bool IsStructKind(ValueKind k) => k == ValueKind.Vector2 || k == ValueKind.Vector3 || k == ValueKind.Color || k == ValueKind.Quaternion;
-
             /// <summary>
             /// "This object" as an UdonBehaviour value: `this` is the U# class, not UdonBehaviour, so it goes through
             /// Component (as UdonSharp allows). As the target of a call (`this.SendCustomEvent`) it stays `this`.
             /// </summary>
             static string AsValue(string expr, ParamType want) =>
-                expr == "this" && want != null && want.UnityType == "VRC.Udon.UdonBehaviour" && !want.IsArray ? "((VRC.Udon.UdonBehaviour)(UnityEngine.Component)this)" : expr;
+                expr == "this" && want != null && want.IsBehaviour ? "((VRC.Udon.UdonBehaviour)(UnityEngine.Component)this)" : expr;
 
             /// <summary>
             /// The event name of Send Event: an empty name calls nothing; over the network, a name starting with '_' is
@@ -499,88 +362,6 @@ namespace Tripwire.Core
                     body.Append("            tw_TimerOn").Append(timer).Append(" = true;\n            Tw_Schedule").Append(timer).Append("();\n");
                 else
                     body.Append("            tw_TimerOn").Append(timer).Append(" = false;\n");
-            }
-
-            void EmitVariableAction(int ev, EventSpec spec, int act, ActionSpec a, ActionCall call, StringBuilder body)
-            {
-                var nameArg = call.Args[0];
-                var name = nameArg != null && nameArg.Source == ArgSource.Constant ? nameArg.Constant as string : null;
-                VariableDecl v;
-                if (name == null || !vars.TryGetValue(name, out v)) { Error(MissingVariable(name), ev, act, 0); return; }
-                if (v.Synced && p.Events[ev].EventId == EventCatalog.DeserializationId)
-                    Warn(Texts.T("Changing a synced variable when sync arrives sends it again, and every receiver does the same: the sync never settles.",
-                                 "同期データを受け取ったときに同期する変数を変えると、その値がまた送られ、受け取った人がまた変えるので、送受信が終わらなくなります。"), ev, act);
-                else if (v.Synced && p.Events[ev].EventId == EventCatalog.VariableChangedId && vars.TryGetValue(p.Events[ev].Name ?? "", out var watched) && watched.Synced)
-                    // A synced variable's change block also runs on every receiver (received sync counts as a change).
-                    Warn(Texts.T("This block also runs for every player who receives '" + watched.Name + "'. Changing the synced variable '" + v.Name + "' here makes each of them change it again (adding or toggling once per player) and take ownership. Change it in the event that changes '" + watched.Name + "' instead.",
-                                 "同期する変数「" + watched.Name + "」が変わったときのブロックは、受け取った全員の環境でも動きます。ここで同期する変数「" + v.Name + "」を変えると、全員がそれぞれ変えるので値が人数分ずれ、オーナーの取り合いにもなります。「" + watched.Name + "」を変えているイベントの側で、あわせて変えてください。"), ev, act);
-                else if (v.Synced && p.Events[ev].Broadcast != Broadcast.Local)
-                    Warn(Texts.T("Setting a synced variable from a broadcast event makes every player take ownership at once, so players end up with different values; set it from Only my screen (Local); the sync reaches everyone by itself.", "「全員（All）」で同期した変数を変えると、全員が同時にオーナーになろうとして、値が人によって食い違います。同期した変数は「自分だけ（Local）」で変えてください（変化は自動で全員に届きます）。"), ev, act);
-
-                var f = FieldOf(v.Name);
-                string arg;
-                switch (a.Special)
-                {
-                    case ActionSpecial.SetVariable:
-                    {
-                        var valueArg = call.Args[1];
-                        if (v.Type.IsArray)
-                        {
-                            // A whole array: dragged objects (bound field) or another array variable — never one element.
-                            if (valueArg != null && valueArg.Source == ArgSource.Objects && v.Kind == ValueKind.Object)
-                            {
-                                var bound = ObjectOperand(spec, v.Type, valueArg, ev, act, 1, "value");
-                                if (bound == null) return;
-                                arg = bound.ArrayField;
-                                break;
-                            }
-                            VariableDecl other;
-                            if (valueArg == null || valueArg.Source != ArgSource.Variable || valueArg.Name == null || !vars.TryGetValue(valueArg.Name, out other))
-                            { Error(Texts.T("Set a list from objects or another list variable.", "リストには、オブジェクトか、同じ型のリストの変数を入れてください。"), ev, act, 1); return; }
-                            if (!IsAssignable(v.Type, other.Type)) { Error(TypeMismatch(other, v.Type), ev, act, 1); return; }
-                            arg = FieldOf(other.Name);
-                            break;
-                        }
-                        // Any other type: constants, variables, a dragged object, event parameters. Assigning null is fine,
-                        // but expressions that dereference something (event collider → .gameObject) keep that guard.
-                        var op = AnyOperand(spec, v.Type, valueArg, ev, act, 1, "value");
-                        if (op == null) return;
-                        body.Append("            ");
-                        var deref = op.GuardsOfSources();
-                        AppendGuarded(body, "", deref, SetStatement(v, AsValue(op.Expr, v.Type)));
-                        return;
-                    }
-                    case ActionSpecial.ToggleVariable:
-                        if (v.Kind != ValueKind.Bool) { Error(Texts.T("Only bool variables can be toggled.", "切り替えられるのはオン/オフの変数だけです。"), ev, act, 0); return; }
-                        arg = "!" + f;
-                        break;
-                    case ActionSpecial.RandomVariable:
-                    {
-                        if ((v.Kind != ValueKind.Int && v.Kind != ValueKind.Float) || v.Type.IsArray) { Error(Texts.T("Random numbers go into an Integer or Number variable.", "ランダムな数を入れられるのは数の変数だけです。"), ev, act, 0); return; }
-                        var min = ValueExpr(v.Type, call.Args[1], ev, act, 1);
-                        var max = ValueExpr(v.Type, call.Args[2], ev, act, 2);
-                        if (min == null || max == null) return;
-                        // Whole numbers include the maximum, as people expect from "1 to 6"; UnityEngine.Random.Range(int, int) excludes it.
-                        if (v.Kind == ValueKind.Int && call.Args[2]?.Source == ArgSource.Constant && call.Args[2].Constant is int hi)
-                        {
-                            if (hi == int.MaxValue) { Error(Texts.T("The maximum is too large.", "最大が大きすぎます。"), ev, act, 2); return; }
-                            if (call.Args[1]?.Source == ArgSource.Constant && call.Args[1].Constant is int lo && lo > hi)
-                            { Error(Texts.T("The minimum is larger than the maximum.", "最小が最大より大きくなっています。"), ev, act, 1); return; }
-                        }
-                        arg = v.Kind == ValueKind.Int ? "UnityEngine.Random.Range(" + min + ", (" + max + ") + 1)" : "UnityEngine.Random.Range(" + min + ", " + max + ")";
-                        break;
-                    }
-                    case ActionSpecial.AddVariable:
-                        if (v.Kind != ValueKind.Int && v.Kind != ValueKind.Float) { Error(Texts.T("Only Integer or Number variables can be added to.", "足せるのは数の変数だけです。"), ev, act, 0); return; }
-                        var amount = ValueExpr(v.Type, call.Args[1], ev, act, 1);
-                        if (amount == null) return;
-                        arg = f + " + " + amount;
-                        break;
-                    default:
-                        Error(Texts.T("This version of Tripwire can't make this action yet (a Tripwire bug: please report it). Another action can be applied.", "この版の Tripwire は、このアクションをまだ作れません（Tripwire の不具合なので報告してください）。別のアクションにすれば反映できます。"), ev, act);
-                        return;
-                }
-                body.Append("            ").Append(SetStatement(v, arg)).Append('\n');
             }
         }
     }

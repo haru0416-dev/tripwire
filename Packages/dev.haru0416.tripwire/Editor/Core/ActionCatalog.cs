@@ -59,6 +59,10 @@ namespace Tripwire.Core
         If,
         /// <summary>A random number into a number variable.</summary>
         RandomVariable,
+        /// <summary>A component of an object (or its children / parents) into an object variable of that component's type.</summary>
+        GetComponent,
+        /// <summary>A and B combined by + - × ÷ or remainder, into a variable (numbers, vectors, colors; text joins with +).</summary>
+        Calculate,
         StartTimer,
         StopTimer,
         /// <summary>Run the block's actions a number of times.</summary>
@@ -103,6 +107,14 @@ namespace Tripwire.Core
         /// <summary>Has an Else list (If).</summary>
         public bool HasElse => Special == ActionSpecial.If;
         public bool IsLoop => Special == ActionSpecial.Repeat || Special == ActionSpecial.ForEach || Special == ActionSpecial.While;
+        /// <summary>The action writes the variable named by its first argument (Set, Toggle, Add, Random, Calculate, Get Component).</summary>
+        public bool WritesVariable => Special == ActionSpecial.SetVariable || Special == ActionSpecial.ToggleVariable || Special == ActionSpecial.AddVariable
+                                      || Special == ActionSpecial.RandomVariable || Special == ActionSpecial.Calculate || Special == ActionSpecial.GetComponent;
+        /// <summary>
+        /// It (nearly) always writes a new value, so a change event it sets off runs again (Toggle, Add, Random, Calculate).
+        /// Set and Get Component can put back the same value, which the setter ignores, ending the chain.
+        /// </summary>
+        public bool ChangesValueEachTime => Special == ActionSpecial.ToggleVariable || Special == ActionSpecial.AddVariable || Special == ActionSpecial.RandomVariable || Special == ActionSpecial.Calculate;
         /// <summary>Nothing after it in the same list runs (Break, Continue, Return).</summary>
         public bool EndsFlow => Special == ActionSpecial.Break || Special == ActionSpecial.Continue || Special == ActionSpecial.StopEvent;
     }
@@ -125,6 +137,10 @@ namespace Tripwire.Core
         public const string ToggleVariableId = "Variable.Toggle";
         public const string AddVariableId = "Variable.Add";
         public const string RandomVariableId = "Variable.Random";
+        public const string CalculateId = "Variable.Calculate";
+        public const string GetComponentId = "Variable.GetComponent";
+        /// <summary>Calculate's operators, in the order of its choice index.</summary>
+        public enum CalcOp { Add, Subtract, Multiply, Divide, Remainder }
         public const string LogId = "Debug.Log";
         public const string SendEventId = "Event.Send";
         public const string SetRemoteId = "Trigger.SetVariable";
@@ -275,12 +291,12 @@ namespace Tripwire.Core
             // Events
             Add(SendEventId, "Event", "Send Event", "Run a Custom event on triggers or any Udon behaviour (by method name).",
                 "{targets}.{broadcast}{event});", "targets",
-                Targets("VRC.Udon.UdonBehaviour"), Str("event", ""),
+                Targets(ParamType.Behaviour), Str("event", ""),
                 Choice("broadcast", 0, new[] { "Local", "All", "Owner" },
                     new[] { "SendCustomEvent(", "SendCustomNetworkEvent(NetworkEventTarget.All, ", "SendCustomNetworkEvent(NetworkEventTarget.Owner, " }));
             Add(SendEventDelayedId, "Event", "Send Event Delayed", "Run a Custom event locally after some seconds.",
                 "{targets}.SendCustomEventDelayedSeconds({event}, {seconds});", "targets",
-                Targets("VRC.Udon.UdonBehaviour"), Str("event", ""), Float("seconds", 1f));
+                Targets(ParamType.Behaviour), Str("event", ""), Float("seconds", 1f));
 
             // Variables (code emitted by the generator; templates unused)
             byId[SetVariableId] = Special(SetVariableId, "Set Variable", "Set a trigger variable. Synced variables reach everyone, including late joiners.", ActionSpecial.SetVariable,
@@ -290,6 +306,10 @@ namespace Tripwire.Core
                 VarRef(), new ActionParam("amount", null));
             byId[RandomVariableId] = Special(RandomVariableId, "Random Number", "Put a random number from min to max (both included for whole numbers) into a number variable.",
                 ActionSpecial.RandomVariable, VarRef(), new ActionParam("min", null), new ActionParam("max", null));
+            byId[GetComponentId] = Special(GetComponentId, "Get Component", "Put a component of an object, or of its children or parents, into an object variable: the variable's type says which component.",
+                ActionSpecial.GetComponent, VarRef(), new ActionParam("source", ParamType.Object(GO)), new ActionParam("where", ParamType.Of(ValueKind.Int), 0) { Choices = new[] { "This object", "Children too", "Parents too" } });
+            byId[CalculateId] = Special(CalculateId, "Calculate", "Put A + - × ÷ B into a variable: numbers, positions (Vector2/3) and colors; text joins with +.",
+                ActionSpecial.Calculate, VarRef(), new ActionParam("a", null), new ActionParam("operator", ParamType.Of(ValueKind.Int), 0) { Choices = new[] { "+", "−", "×", "÷", "%" } }, new ActionParam("b", null));
             byId[RepeatId] = Special(RepeatId, "Repeat", "Run some actions a number of times.", ActionSpecial.Repeat,
                 Int("count", 3), VarRef("counter", VariableRole.Counter, optional: true));
             byId[ForEachId] = Special(ForEachId, "For Each", "Run some actions once for each item of a list variable.", ActionSpecial.ForEach,
@@ -336,10 +356,10 @@ namespace Tripwire.Core
             Layout("Pickup", "Pickup.Drop", "Networking.TakeOwnership");
             foreach (var id in new[] { RepeatId, ForEachId, WhileId, BreakId, ContinueId, StopId, TimerStartId, TimerStopId }) byId[id].Category = "Flow";
             Layout("Flow", IfId, RepeatId, ForEachId, WhileId, BreakId, ContinueId, StopId, TimerStartId, TimerStopId);
-            Layout("Variable", SetVariableId, ToggleVariableId, AddVariableId, RandomVariableId);
+            Layout("Variable", SetVariableId, ToggleVariableId, AddVariableId, RandomVariableId, CalculateId, GetComponentId);
             Layout("Video", "Video.PlayUrl", "Video.LoadUrl", "Video.Play", "Video.Pause", "Video.Stop", "Video.SetTime", "Video.SetLoop");
             // Another trigger's variables (with Send Event, this passes values to its Custom events).
-            var trigger = new ActionParam("trigger", ParamType.Object("VRC.Udon.UdonBehaviour")) { };
+            var trigger = new ActionParam("trigger", ParamType.Object(ParamType.Behaviour)) { };
             trigger.Type.IsComponent = true;
             var remote = new ActionParam("remoteVariable", ParamType.Of(ValueKind.String), "") { RemoteVariableRef = true };
             byId[SetRemoteId] = Special(SetRemoteId, "Set Another Trigger's Variable", "Set a variable of another trigger; its sync and change events run as if it set it itself.",

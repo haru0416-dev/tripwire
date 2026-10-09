@@ -38,7 +38,11 @@ namespace Tripwire.Core
     /// <summary>Type of an action parameter, variable or event parameter.</summary>
     public sealed class ParamType
     {
+        public const string Behaviour = "VRC.Udon.UdonBehaviour";
+
         public ValueKind Kind;
+        /// <summary>One UdonBehaviour: a trigger or script to call, or the receiver a call reports back to.</summary>
+        public bool IsBehaviour => Kind == ValueKind.Object && UnityType == Behaviour && !IsArray;
         /// <summary>C# type name for <see cref="ValueKind.Object"/> / <see cref="ValueKind.Enum"/>, e.g. "UnityEngine.GameObject".</summary>
         public string UnityType;
         /// <summary>An array of this kind (any kind). Object parameters that are arrays apply the action to each target.</summary>
@@ -208,6 +212,21 @@ namespace Tripwire.Core
         public CallSpec Call;
         /// <summary>For calls with a return value: variable that receives it (optional for methods).</summary>
         public string ResultVariable;
+
+        /// <summary>The variables a call writes: the result, then the variables given to `out` / `ref` parameters.</summary>
+        public IEnumerable<string> CallOutputs()
+        {
+            if (!string.IsNullOrEmpty(ResultVariable)) yield return ResultVariable;
+            if (Call == null) yield break;
+            // A struct variable the call changes (pos.y = 3) gets the changed copy back.
+            if (Call.ChangesInstance && Args.Count > 0 && Args[0] != null && Args[0].Source == ArgSource.Variable && !string.IsNullOrEmpty(Args[0].Name)) yield return Args[0].Name;
+            int first = Call.Instance != null ? 1 : 0;
+            for (int i = 0; i < Call.Params.Count; i++)
+            {
+                var arg = first + i < Args.Count ? Args[first + i] : null;
+                if (Call.Params[i].Receives && arg != null && arg.Source == ArgSource.Variable && !string.IsNullOrEmpty(arg.Name)) yield return arg.Name;
+            }
+        }
         /// <summary>Set / Read Another Trigger's Variable: the type of that variable (the editor looks it up), or null.</summary>
         public ParamType RemoteType;
         /// <summary>The other trigger's variable is temporary (private there): it can't be set or read from outside.</summary>
@@ -259,6 +278,23 @@ namespace Tripwire.Core
         public List<EventParam> Params = new List<EventParam>();
         /// <summary>Null when void.</summary>
         public ParamType Returns;
+        /// <summary>
+        /// The C# enum the member really returns when Udon can't hold it in a variable (VRCPickup.currentHand): the
+        /// value is stored as its number (Returns is Int).
+        /// </summary>
+        public string ReturnsEnum;
+        /// <summary>The instance is a struct (Vector3, Color, VRCTweenHandle, DateTime...): a setter or a void method changes a copy.</summary>
+        public bool InstanceIsStruct;
+
+        /// <summary>
+        /// The call changes the struct it is made on (pos.y = 3, v.Normalize(), handle.Kill()): it needs a variable as the
+        /// target, which gets the changed copy back. Calls that only read (returning a value, or handing values back
+        /// through `out`) change nothing.
+        /// </summary>
+        public bool ChangesInstance =>
+            Instance != null && !Instance.IsArray
+            && (InstanceIsStruct || Instance.Kind == ValueKind.Vector2 || Instance.Kind == ValueKind.Vector3 || Instance.Kind == ValueKind.Color || Instance.Kind == ValueKind.Quaternion)
+            && (Kind == CallKind.Set || (Kind == CallKind.Method && Returns == null && !Params.Any(p => p.Receives)));
 
         public string Display()
         {
@@ -269,14 +305,16 @@ namespace Tripwire.Core
                 case CallKind.Set: return shortType + "." + Member + " (set)";
                 case CallKind.Ctor:
                     var cs = new List<string>();
-                    foreach (var p in Params) cs.Add(p.Type.ToString() + " " + p.Name);
+                    foreach (var p in Params) cs.Add(Shown(p));
                     return "new " + shortType + "(" + string.Join(", ", cs) + ")";
                 default:
                     var ps = new List<string>();
-                    foreach (var p in Params) ps.Add(p.Type.ToString() + " " + p.Name);
+                    foreach (var p in Params) ps.Add(Shown(p));
                     return shortType + "." + Member + "(" + string.Join(", ", ps) + ")";
             }
         }
+
+        static string Shown(EventParam p) => (p.Pass == ParamPass.Out ? "out " : p.Pass == ParamPass.Ref ? "ref " : "") + p.Type + " " + p.Name;
     }
 
     public enum ArgSource

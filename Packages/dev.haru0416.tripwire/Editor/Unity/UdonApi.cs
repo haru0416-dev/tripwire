@@ -48,6 +48,9 @@ namespace Tripwire.Editor
             if (installed) return;
             installed = true;
             InstallTypeCheck();
+            CodeGenerator.EnumMembersOf = name => TripwireModel.ResolveType(name) is Type t && t.IsEnum ? EnumMembers(t) : null;
+            // The list UdonSharp checks synced fields against (an unknown type is left to the other checks).
+            CodeGenerator.CanSync = type => TripwireModel.ResolveType(CodeGenerator.FullTypeName(type)) is not Type t || VRC.Udon.UdonNetworkTypes.CanSync(t);
             foreach (var d in UdonNodes.Events)
             {
                 var name = d.fullName.Substring("Event_".Length);
@@ -114,6 +117,7 @@ namespace Tripwire.Editor
 
             bool returnsSomething = false;
             var inTypes = new List<Type>();
+            var inOut = new List<int>(); // parameters Udon marks IN_OUT (indices into c.Params)
             for (int i = start; i < ps.Count; i++)
             {
                 var p = ps[i];
@@ -129,10 +133,36 @@ namespace Tripwire.Editor
                         // The return value (Udon names Instantiate's "clone").
                         returnsSomething = true;
                         c.Returns = ValueType(p.type);
+                        // An enum Udon has no variable type for, but can resolve: kept as its number.
+                        if (c.Returns == null && ArgumentType(p.type) is ParamType asEnum && asEnum.Kind == ValueKind.Enum)
+                        {
+                            c.Returns = ParamType.Of(ValueKind.Int);
+                            c.ReturnsEnum = CSharpName(p.type);
+                        }
+                        break;
+                    case UdonNodeParameter.ParameterType.IN_OUT:
+                        // An `out` / `ref` parameter (Udon has one kind for both; the C# method tells which), or an array the
+                        // method fills in place. Either way a variable of the value's type takes part.
+                        var element = p.type.IsByRef ? p.type.GetElementType() : p.type;
+                        var vt = ValueType(element);
+                        if (vt == null) return null;
+                        c.Params.Add(new EventParam(string.IsNullOrEmpty(p.name) ? "arg" + (i - start) : p.name, vt));
+                        inTypes.Add(element);
+                        inOut.Add(c.Params.Count - 1);
                         break;
                     default:
-                        return null; // out / ref parameters
+                        return null;
                 }
+            }
+            if (inOut.Count > 0)
+            {
+                // Which are `out`, which `ref`, which plain arrays: read from the C# method itself.
+                if (c.Kind != CallKind.Method || !ResolvePasses(declaring, name, c, inTypes, inOut)) return null;
+                // In Udon an extern's `ref` argument never comes back (Mathf.SmoothDamp's velocity stays 0; checked in
+                // ClientSim with SDK 3.10.5), while `out` does: offering `ref` would silently do nothing.
+                if (c.Params.Any(x => x.Pass == ParamPass.Ref)) return null;
+                for (int i = 0; i < c.Params.Count; i++)
+                    if (c.Params[i].Receives) inTypes[i] = inTypes[i].MakeByRefType();
             }
 
             if (c.Kind == CallKind.Ctor)
@@ -155,13 +185,43 @@ namespace Tripwire.Editor
             if (c.Kind == CallKind.Method && (name.StartsWith("get_", StringComparison.Ordinal) || name.StartsWith("set_", StringComparison.Ordinal)
                                              || name.StartsWith("add_", StringComparison.Ordinal) || name.StartsWith("remove_", StringComparison.Ordinal)))
                 return null;
-            // On a struct held in a variable, mutating members (setters, void methods like Vector3.Normalize) would act on
-            // a copy under UdonSharp's value semantics; only reads are offered.
-            if (valueTypeInstance && (c.Kind == CallKind.Set || (c.Kind == CallKind.Method && !returnsSomething))) return null;
+            // On a struct, setters and void methods (Vector3.y, Vector3.Normalize, VRCTweenHandle.Kill) act on a copy under
+            // UdonSharp's value semantics: the generator makes them work on a variable and stores the copy back.
+            c.InstanceIsStruct = valueTypeInstance;
             // Generated code is compiled by Unity as plain C# first, so the member must exist in the installed
             // assemblies (Udon's list can be ahead of a package, e.g. Cinemachine) and must not be [Obsolete(error)].
             if (!IsCallableFromCSharp(declaring, c, inTypes.ToArray())) return null;
             return c;
+        }
+
+        /// <summary>
+        /// Sets each parameter Udon marks IN_OUT (<paramref name="inOut"/>) to Out, Ref or Fill (an array filled in place)
+        /// from the public C# method with this name and these parameter types (by-ref or not). False when there is no single one.
+        /// </summary>
+        static bool ResolvePasses(Type declaring, string member, CallSpec c, List<Type> types, List<int> inOut)
+        {
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.FlattenHierarchy;
+            var found = declaring.GetMethods(flags).Where(m => m.Name == member).Where(m =>
+            {
+                var ps = m.GetParameters();
+                if (ps.Length != types.Count) return false;
+                for (int i = 0; i < ps.Length; i++)
+                {
+                    var t = ps[i].ParameterType;
+                    if ((t.IsByRef ? t.GetElementType() : t) != types[i]) return false;
+                    bool marked = inOut.Contains(i);
+                    if (t.IsByRef ? !marked : marked && !t.IsArray) return false;
+                }
+                return true;
+            }).ToList();
+            if (found.Count != 1) return false;
+            var parameters = found[0].GetParameters();
+            foreach (int i in inOut)
+            {
+                var t = parameters[i].ParameterType;
+                c.Params[i].Pass = !t.IsByRef ? ParamPass.Fill : parameters[i].IsOut ? ParamPass.Out : ParamPass.Ref;
+            }
+            return true;
         }
 
         static bool IsCallableFromCSharp(Type declaring, CallSpec c, Type[] paramTypes)
@@ -325,6 +385,14 @@ namespace Tripwire.Editor
         /// </summary>
         static ParamType ArgumentType(Type t)
         {
+            // The behaviour a call reports back to (VRCStringDownloader.LoadUrl, VRCTween's callbacks, network events
+            // with values, Store.ListPurchases...): an UdonBehaviour, which implements it; this trigger by default.
+            if (t != null && t.FullName == "VRC.Udon.Common.Interfaces.IUdonEventReceiver")
+            {
+                var receiver = ParamType.Object(ParamType.Behaviour);
+                receiver.IsComponent = true;
+                return receiver;
+            }
             if (t != null && t.IsEnum && !t.IsGenericType && !variableTypes.Contains(t) && (t.IsPublic || t.IsNestedPublic)
                 && UdonNodes.TypeFromUdonName(UdonTypeId(t)) == t) // the assembler's own lookup
                 return new ParamType(ValueKind.Enum, CSharpName(t));

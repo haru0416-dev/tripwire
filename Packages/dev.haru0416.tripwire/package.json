@@ -1,7 +1,7 @@
 {
   "name": "dev.haru0416.tripwire",
   "displayName": "Tripwire",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "unity": "2022.3",
   "description": "Make VRChat world gimmicks without code: \"when → what to do\" cards in the Inspector. Japanese and English UI. / コードを書かずに、Inspector の「いつ → 何をする」カードでワールドのギミックを作れます。",
   "author": {

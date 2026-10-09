@@ -59,14 +59,24 @@ namespace Tripwire.Tests
 
             var scaled = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             scaled.name = "F_Scaled";
-            var ct = Trigger(Box("F_Caller", new Vector3(2, 1, 2)), ("best", "System.Int32", false));
+            var ct = Trigger(Box("F_Caller", new Vector3(2, 1, 2)), ("best", "System.Int32", false),
+                ("parsed", "System.Int32", true), ("parsedOk", "System.Boolean", false), ("h", "System.Single", false), ("s", "System.Single", false), ("v", "System.Single", false));
             var setScale = new KAction { actionId = "Udon.Call", method = "UnityEngineTransform.__set_localScale__UnityEngineVector3__SystemVoid" };
             setScale.args.Add(Objs(scaled)); // a GameObject, coerced to its Transform
             setScale.args.Add(new KArg { vectorValue = new Vector3(2, 3, 4) });
             var max = new KAction { actionId = "Udon.Call", method = "UnityEngineMathf.__Max__SystemInt32_SystemInt32__SystemInt32", resultVariable = "best" };
             max.args.Add(Var("best"));
             max.args.Add(Int(7));
-            ct.events.Add(On("Interact", "", setScale, max));
+            // `out` parameters: into a synced variable (through its setter), and three from a void method.
+            var parse = new KAction { actionId = "Udon.Call", method = "SystemInt32.__TryParse__SystemString_SystemInt32Ref__SystemBoolean", resultVariable = "parsedOk" };
+            parse.args.Add(Str("42"));
+            parse.args.Add(Var("parsed"));
+            var hsv = new KAction { actionId = "Udon.Call", method = "UnityEngineColor.__RGBToHSV__UnityEngineColor_SystemSingleRef_SystemSingleRef_SystemSingleRef__SystemVoid" };
+            hsv.args.Add(new KArg { vector4Value = new Vector4(1, 0, 0, 1) });
+            hsv.args.Add(Var("h"));
+            hsv.args.Add(Var("s"));
+            hsv.args.Add(Var("v"));
+            ct.events.Add(On("Interact", "", setScale, max, parse, hsv));
 
             // Find → object variable → next action's target; an array variable (assigned in the Inspector) as a target list.
             Obj("F_Lamp");
@@ -105,6 +115,12 @@ namespace Tripwire.Tests
             yield return null;
             check(Root("F_Scaled").transform.localScale == new Vector3(2, 3, 4), "F: Udon API call set Transform.localScale");
             check(caller.TryGetProgramVariable("v_best", out int best) && best == 7, "F: Mathf.Max stored into a variable (" + best + ")");
+            caller.TryGetProgramVariable("v_parsed", out int parsed);
+            caller.TryGetProgramVariable("v_parsedOk", out bool parsedOk);
+            check(parsed == 42 && parsedOk, "F: int.TryParse's out parameter went into a synced variable (" + parsed + ", " + parsedOk + ")");
+            caller.TryGetProgramVariable("v_s", out float sat);
+            caller.TryGetProgramVariable("v_v", out float val);
+            check(Mathf.Approximately(sat, 1f) && Mathf.Approximately(val, 1f), "F: Color.RGBToHSV's out parameters went into variables (s " + sat + ", v " + val + ")");
 
             var chain = Root("F_Chain").GetComponent<UdonBehaviour>();
             yield return Ready(chain);
@@ -729,6 +745,72 @@ namespace Tripwire.Tests
             check(count == 1, "S: after the change by hand the press runs again (count " + count + ")");
             TripwireTrace.PollNow();
             check(TripwireTrace.Of(t, 0).last?.Ran == true, "S: the card's last record is the new run");
+        }
+
+        // ---------------- T. Wider Udon API: a callback to this trigger, Calculate, part of a struct, enums as numbers, Get Component, a tween stopped ----------------
+
+        /// <summary>The Udon name of an offered member (the first that fits), so the scenario doesn't spell long names.</summary>
+        static CallSpec Api(string type, string member, Func<CallSpec, bool> fits = null) =>
+            UdonApi.All.First(c => c.DeclaringType == type && c.Member == member && (fits == null || fits(c)));
+
+        /// <summary>A plain value for each parameter: this trigger for a callback, a name, a short time, the first enum member.</summary>
+        static KAction CallWith(CallSpec c, string result, params KArg[] first)
+        {
+            var a = new KAction { actionId = "Udon.Call", method = c.UdonName, resultVariable = result ?? "" };
+            a.args.AddRange(first);
+            foreach (var p in c.Params.Skip(a.args.Count - (c.Instance != null ? 1 : 0)))
+                a.args.Add(p.Type.Kind == ValueKind.Object && p.Type.UnityType == "VRC.Udon.UdonBehaviour" ? new KArg { source = KArgSource.Self }
+                    : p.Type.Kind == ValueKind.String ? Str("T_Ping")
+                    : p.Type.Kind == ValueKind.Float ? new KArg { floatValue = 0.2f }
+                    : p.Type.Kind == ValueKind.Enum ? Str(UdonApi.EnumMembers(TripwireModel.ResolveType(p.Type.UnityType)).First())
+                    : new KArg());
+            return a;
+        }
+
+        static void AddWiderApi()
+        {
+            var mover = Obj("T_Mover");
+            var sphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            sphere.name = "T_Sphere";
+            var t = Trigger(Box("T_Wide", new Vector3(26, 1, 0)), ("pos", "UnityEngine.Vector3", false), ("label", "System.String", false), ("col", "UnityEngine.Collider", false),
+                ("shadow", "System.Int32", false), ("pinged", "System.Boolean", false), ("handle", "VRC.SDK3.Components.VRCTweenHandle", false));
+            t.variables.First(v => v.name == "pos").initial.vectorValue = new Vector3(1, 2, 3);
+
+            var setY = new KAction { actionId = "Udon.Call", method = Api("UnityEngine.Vector3", "y", c => c.Kind == CallKind.Set).UdonName, args = { Var("pos"), new KArg { floatValue = 5f } } };
+            var up = new KAction { actionId = ActionCatalog.CalculateId, args = { Str("pos"), Var("pos"), Int((int)ActionCatalog.CalcOp.Add), new KArg { vectorValue = new Vector3(0, 1, 0) } } };
+            var join = new KAction { actionId = ActionCatalog.CalculateId, args = { Str("label"), Str("Hi "), Int((int)ActionCatalog.CalcOp.Add), Str("there") } };
+            var getCol = new KAction { actionId = ActionCatalog.GetComponentId, args = { Str("col"), Objs(sphere), Int(0) } };
+            var shadow = CallWith(Api("UnityEngine.Renderer", "shadowCastingMode", c => c.Kind == CallKind.Get), "shadow", Objs(sphere));
+            var delayed = CallWith(Api("VRC.SDK3.Components.VRCTween", "DelayedCall", c => c.Params.Any(p => p.Type.UnityType == "VRC.Udon.UdonBehaviour")), null);
+            var tween = Api("VRC.SDK3.Components.VRCTween", "TweenPosition", c => c.Params.Count > 0 && c.Params[0].Type.Kind == ValueKind.Object && c.Params[0].Type.UnityType == "UnityEngine.GameObject"
+                                                                                && c.Params.Any(p => p.Type.Kind == ValueKind.Vector3) && c.Returns != null);
+            var go = CallWith(tween, "handle", Objs(mover), new KArg { vectorValue = new Vector3(0, 10, 0) });
+            go.args[3 - 1].floatValue = 1f; // the duration (the parameter after the target and the position)
+            var kill = CallWith(Api("VRC.SDK3.Components.VRCTweenHandle", "Kill"), null, Var("handle"));
+            t.events.Add(On("Interact", "", setY, up, join, getCol, shadow, delayed, go, kill));
+            t.events.Add(On("Custom", "T_Ping", SetVar("pinged", Bool(true))));
+        }
+
+        static IEnumerator CheckWiderApi(Action<bool, string> check)
+        {
+            var ub = Root("T_Wide").GetComponent<UdonBehaviour>();
+            yield return Ready(ub);
+            ub.Interact();
+            yield return null;
+            ub.TryGetProgramVariable("v_pos", out Vector3 pos);
+            check(pos == new Vector3(1, 6, 3), "T: pos.y set on a variable, then Calculate added (0, 1, 0) (" + pos + ")");
+            ub.TryGetProgramVariable("v_label", out string label);
+            check(label == "Hi there", "T: Calculate joined text (" + label + ")");
+            ub.TryGetProgramVariable("v_col", out Collider col);
+            check(col != null && col == Root("T_Sphere").GetComponent<Collider>(), "T: Get Component found the sphere's collider");
+            ub.TryGetProgramVariable("v_shadow", out int shadow);
+            check(shadow == (int)UnityEngine.Rendering.ShadowCastingMode.On, "T: an enum Udon can't hold came back as its number (" + shadow + ")");
+            var end = Time.realtimeSinceStartup + 1.5f;
+            while (Time.realtimeSinceStartup < end) yield return null;
+            ub.TryGetProgramVariable("v_pinged", out bool pinged);
+            check(pinged, "T: VRCTween.DelayedCall called this trigger's Custom event back");
+            var y = Root("T_Mover").transform.position.y;
+            check(y < 5f, "T: the tween's handle, kept in a variable, stopped it (y " + y + ")");
         }
     }
 }

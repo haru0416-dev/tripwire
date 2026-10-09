@@ -31,7 +31,16 @@ namespace Tripwire.Tests
                 var rest = d.fullName.Substring(d.fullName.IndexOf(".__", StringComparison.Ordinal) + 3);
                 int sep = rest.IndexOf("__", StringComparison.Ordinal);
                 var name = sep < 0 ? rest : rest.Substring(0, sep);
-                var ins = d.parameters.Where((p, i) => p.parameterType == UdonNodeParameter.ParameterType.IN && !(i == 0 && p.name == "instance" && name != "ctor")).Select(p => p.type).ToArray();
+                // The C# parameter types: inputs as they are; `out` / `ref` ones (Udon's IN_OUT) by reference, as Tripwire
+                // resolved them (an array filled in place stays a plain array).
+                var call = UdonApi.Get(d.fullName);
+                var ps = d.parameters.Where((p, i) => (p.parameterType == UdonNodeParameter.ParameterType.IN || p.parameterType == UdonNodeParameter.ParameterType.IN_OUT)
+                                                      && !(i == 0 && p.name == "instance" && name != "ctor")).ToList();
+                var ins = ps.Select((p, j) =>
+                {
+                    var element = p.type.IsByRef ? p.type.GetElementType() : p.type;
+                    return j < call.Params.Count && call.Params[j].Receives ? element.MakeByRefType() : element;
+                }).ToArray();
                 MethodBase member = name == "ctor" ? (MethodBase)d.type.GetConstructor(all, null, ins, null) : d.type.GetMethod(name, all, null, ins, null);
                 string udon;
                 if (member != null) udon = UdonNames.Of(member, d.type);

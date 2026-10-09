@@ -30,7 +30,8 @@ namespace Tripwire.Tests
     {
         const string SceneDir = "Assets/TripwireTests/Temp";
         const string ScenePath = SceneDir + "/Fuzz.unity";
-        const int Seed = 20261006;
+        // FUZZ_SEED=n explores other combinations (the default keeps the suite's run the same).
+        static readonly int Seed = int.TryParse(System.Environment.GetEnvironmentVariable("FUZZ_SEED"), out var seed) ? seed : 20261006;
         const int Triggers = 300;
 
         static readonly string[] VariableTypes =
@@ -38,6 +39,7 @@ namespace Tripwire.Tests
             "System.Boolean", "System.Int32", "System.Single", "System.String", "UnityEngine.Vector3", "UnityEngine.Vector2",
             "UnityEngine.Color", "UnityEngine.Quaternion", "UnityEngine.GameObject", "UnityEngine.GameObject[]", "UnityEngine.Transform",
             "VRC.SDKBase.VRCPlayerApi", "VRC.SDKBase.VRCUrl", "System.Byte", "System.Int32[]", "UnityEngine.AudioSource",
+            "UnityEngine.Rigidbody", "VRC.SDK3.Components.VRCTweenHandle", "UnityEngine.Vector3[]",
         };
         static readonly string[] VariableNames = { "a", "count", "isOn", "スコア", "扉_開", "name2", "target", "list", "url", "speed", "x" };
 
@@ -106,6 +108,12 @@ namespace Tripwire.Tests
             // Not drawn: API calls (UdonApiCompileTests) and actions on another trigger's variables (ScenarioTests R).
             var actions = ActionCatalog.All.Where(a => a.Id != ActionCatalog.CallId && a.Id != ActionCatalog.ScriptCallId
                                                        && a.Special != ActionSpecial.SetRemoteVariable && a.Special != ActionSpecial.GetRemoteVariable).ToList();
+            // API calls of the kinds that need care: `out` parameters, a receiver (this trigger), changing part of a struct,
+            // an enum kept as a number, an array filled in place; plus a sample of the rest. Every 7th of the sorted list,
+            // so the draw is the same from run to run.
+            var risky = UdonApi.All.Where(c => c.Params.Any(p => p.Pass != ParamPass.In) || c.ChangesInstance || c.ReturnsEnum != null
+                                               || c.Params.Any(p => p.Type.Kind == ValueKind.Object && p.Type.UnityType == "VRC.Udon.UdonBehaviour")).ToList();
+            var calls = risky.Concat(UdonApi.All.Where((c, i) => i % 41 == 0)).Where((c, i) => i % 7 == 0 || c.Params.Any(p => p.Pass != ParamPass.In)).ToList();
             var triggers = new List<TripwireTrigger>();
             for (int n = 0; n < Triggers; n++)
             {
@@ -169,8 +177,38 @@ namespace Tripwire.Tests
                         }
                     }
 
+                    KAction DrawCall()
+                    {
+                        // As the Inspector builds it: an `out` parameter gets a variable it fits (now and then none), the
+                        // result a fitting variable or none; other arguments as for any action.
+                        var c = calls[r.Next(calls.Count)];
+                        var act = new KAction { actionId = ActionCatalog.CallId, method = c.UdonName };
+                        var types = TripwireModel.CallArgTypes(c);
+                        // A variable of exactly this type: one the trigger has, or a new one (as a user would add it).
+                        string VarOf(ParamType type)
+                        {
+                            var have = t.variables.Where(v => TripwireModel.VariableType(v) is ParamType vt && CodeGenerator.FullTypeName(vt) == CodeGenerator.FullTypeName(type)).ToList();
+                            if (have.Count > 0 && r.Next(3) > 0) return have[r.Next(have.Count)].name;
+                            var made = new KVariable { name = "c" + t.variables.Count, typeName = CodeGenerator.FullTypeName(type) };
+                            if (TripwireModel.VariableType(made) == null) return "nope";
+                            t.variables.Add(made);
+                            return made.name;
+                        }
+                        KArg Named(string name) => new KArg { source = KArgSource.Variable, name = name };
+                        for (int k = 0; k < types.Count; k++)
+                        {
+                            int pi = k - (c.Instance != null ? 1 : 0);
+                            bool needsVariable = (pi >= 0 && c.Params[pi].Receives) || (pi < 0 && c.ChangesInstance) || types[k].Kind == ValueKind.Other;
+                            if (needsVariable) { act.args.Add(r.Next(8) > 0 ? Named(VarOf(types[k])) : RandomArg(r, types[k], t, spec, pool, triggers)); continue; }
+                            act.args.Add(RandomArg(r, types[k], t, spec, pool, triggers));
+                        }
+                        if (c.Returns != null && (c.Kind != CallKind.Method || r.Next(3) > 0)) act.resultVariable = VarOf(c.Returns);
+                        return act;
+                    }
+
                     KAction DrawAction(int depth, bool inLoop)
                     {
+                        if (r.Next(4) == 0) return DrawCall();
                         var aspec = actions[r.Next(actions.Count)];
                         var act = new KAction { actionId = aspec.Id };
                         if (aspec.HasConditions) // If, While
@@ -262,7 +300,7 @@ namespace Tripwire.Tests
                     .Concat(rejected.OrderByDescending(kv => kv.Value).Select(kv => kv.Value.ToString().PadLeft(5) + "  " + kv.Key))
                     .Concat(new[] { "", "accepted:" }).Concat(lines));
 
-            Assert.Greater(accepted, Triggers / 4, "enough random triggers are valid to make the check meaningful");
+            Assert.Greater(accepted, Triggers / 5, "enough random triggers are valid to make the check meaningful"); // API calls (drawn often) are often invalid on purpose
             Assert.AreNotEqual(TripwireCompiler.State.NeedsScripts, state, "accepted triggers' scripts compiled as C# (see Logs for error CS lines)");
             CollectionAssert.IsEmpty(notAttached, "every accepted trigger got its generated behaviour");
             Assert.IsFalse(UdonSharpProgramAsset.AnyUdonSharpScriptHasError(), "accepted triggers compile as UdonSharp (see the log for the Tripwire_ file)");

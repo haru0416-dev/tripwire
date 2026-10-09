@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Tripwire.Core;
 using Tripwire.Editor;
 using NUnit.Framework;
 using UdonSharp;
@@ -129,6 +130,28 @@ public class HandLight : UdonSharpBehaviour
     }
 }
 ",
+            ["HandApi"] = @"using UdonSharp;
+using UnityEngine;
+
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+public class HandApi : UdonSharpBehaviour
+{
+    public string text = ""42"";
+    int n;
+    bool ok;
+    Vector3 pos;
+    string label;
+
+    public void Run()
+    {
+        ok = int.TryParse(text, out n);
+        n = n * 2;
+        pos.y = 1.5f;
+        pos = pos + Vector3.up;
+        label = ""n = "" + n;
+    }
+}
+",
             ["HandMany"] = @"using UdonSharp;
 using UnityEngine;
 
@@ -182,6 +205,20 @@ public class HandMany : UdonSharpBehaviour
             flip.actions.Add(toggle);
             many.events.Add(flip);
 
+            // The wider API: an `out` parameter, Calculate, part of a position, text joined.
+            var api = new GameObject("GenApi").AddComponent<TripwireTrigger>();
+            foreach (var (name, type) in new[] { ("text", "System.String"), ("n", "System.Int32"), ("ok", "System.Boolean"), ("pos", "UnityEngine.Vector3"), ("label", "System.String") })
+                api.variables.Add(new KVariable { name = name, typeName = type });
+            api.variables[0].initial.stringValue = "42";
+            KArg V(string name) => new KArg { source = KArgSource.Variable, name = name };
+            var run = new KEvent { eventId = "Custom", name = "Run" };
+            run.actions.Add(new KAction { actionId = "Udon.Call", method = "SystemInt32.__TryParse__SystemString_SystemInt32Ref__SystemBoolean", resultVariable = "ok", args = { V("text"), V("n") } });
+            run.actions.Add(new KAction { actionId = ActionCatalog.CalculateId, args = { new KArg { stringValue = "n" }, V("n"), new KArg { intValue = (int)ActionCatalog.CalcOp.Multiply }, new KArg { intValue = 2 } } });
+            run.actions.Add(new KAction { actionId = "Udon.Call", method = UdonApi.All.First(c => c.DeclaringType == "UnityEngine.Vector3" && c.Member == "y" && c.Kind == CallKind.Set).UdonName, args = { V("pos"), new KArg { floatValue = 1.5f } } });
+            run.actions.Add(new KAction { actionId = ActionCatalog.CalculateId, args = { new KArg { stringValue = "pos" }, V("pos"), new KArg { intValue = (int)ActionCatalog.CalcOp.Add }, new KArg { vectorValue = Vector3.up } } });
+            run.actions.Add(new KAction { actionId = ActionCatalog.CalculateId, args = { new KArg { stringValue = "label" }, new KArg { stringValue = "n = " }, new KArg { intValue = 0 }, V("n") } });
+            api.events.Add(run);
+
             // Size only: four synced variables nothing sets (their setters are dead code) and one click.
             var unused = new GameObject("GenUnusedSynced").AddComponent<TripwireTrigger>();
             foreach (var (name, type) in new[] { ("b", "System.Boolean"), ("i", "System.Int32"), ("f", "System.Single"), ("s", "System.String") })
@@ -215,7 +252,8 @@ public class HandMany : UdonSharpBehaviour
             Set(light, "bright", new GameObject("HandBright"));
             var handMany = Add("HandMany", "HandMany");
             Set(handMany, "targets", Enumerable.Range(0, Many).Select(i => new GameObject("HandMany_t" + i)).ToArray());
-            foreach (var p in new[] { door, score, light, handMany }) UdonSharpEditorUtility.CopyProxyToUdon((UdonSharpBehaviour)p);
+            var handApi = Add("HandApi", "HandApi");
+            foreach (var p in new[] { door, score, light, handMany, handApi }) UdonSharpEditorUtility.CopyProxyToUdon((UdonSharpBehaviour)p);
 
             Directory.CreateDirectory(SceneDir);
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -284,6 +322,7 @@ public class HandMany : UdonSharpBehaviour
                 ("Score AddPoint (synced + change event)", "ScoreBoard", "AddPoint", "HandScore", "AddPoint", null, null),
                 ("Slider -> synced float -> light", "LightPanel", CodeGeneratorUi(), "HandLight", "OnSlider", genMove, handMove),
                 ("Toggle 64 objects", "GenMany", "Flip", "HandMany", "Flip", null, null),
+                ("TryParse out, Calculate, pos.y, text", "GenApi", "Run", "HandApi", "Run", null, null),
             };
             var timing = new List<string> { "", "## Time per event on the Udon VM (us, median of " + Rounds + " rounds x " + CallsPerRound + " calls)", "case                                      gen      hand    ratio" };
             foreach (var c in cases)
@@ -325,9 +364,17 @@ public class HandMany : UdonSharpBehaviour
                 Assert.IsFalse(UdonSharpProgramAsset.AnyUdonSharpScriptHasError());
                 EditorSceneManager.SaveScene(SceneManager.GetActiveScene());
 
+                // The editor's list of Udon API members, built from scratch (the first Inspector or Apply pays this once).
+                var allField = typeof(UdonApi).GetField("all", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                allField.SetValue(null, null);
+                var build = Stopwatch.StartNew();
+                int members = UdonApi.All.Count;
+                build.Stop();
+                report.Add($"## Udon API list: {members} members built in {build.Elapsed.TotalMilliseconds:F0} ms");
+                report.Add("");
                 report.Add("## Program size (generated vs hand-written)");
                 report.Add("pair                 instr(gen/hand)   extern(gen/hand)   heap(gen/hand)");
-                foreach (var (gen, hand) in new[] { ("Door", "HandDoor"), ("ScoreBoard", "HandScore"), ("LightPanel", "HandLight"), ("GenMany", "HandMany") })
+                foreach (var (gen, hand) in new[] { ("Door", "HandDoor"), ("ScoreBoard", "HandScore"), ("LightPanel", "HandLight"), ("GenMany", "HandMany"), ("GenApi", "HandApi") })
                 {
                     var g = Measure(ProgramOf(Root(gen)), "gen_" + gen);
                     var h = Measure(ProgramOf(Root(hand)), "hand_" + hand);
@@ -342,7 +389,7 @@ public class HandMany : UdonSharpBehaviour
             yield return new EnterPlayMode();
             LogAssert.ignoreFailingMessages = true;
 
-            var names = new[] { "Door", "HandDoor", "ScoreBoard", "HandScore", "LightPanel", "HandLight", "GenMany", "HandMany" };
+            var names = new[] { "Door", "HandDoor", "ScoreBoard", "HandScore", "LightPanel", "HandLight", "GenMany", "HandMany", "GenApi", "HandApi" };
             var missing = names.Where(n => Root(n) == null || Root(n).GetComponent<UdonBehaviour>() == null).ToList();
             Assert.IsEmpty(missing, "objects with an UdonBehaviour in play mode; roots: " + string.Join(",", SceneManager.GetActiveScene().GetRootGameObjects().Select(g => g.name).Where(n => !n.Contains("_t"))));
             var ubs = names.ToDictionary(n => n, n => Root(n).GetComponent<UdonBehaviour>());
@@ -356,7 +403,14 @@ public class HandMany : UdonSharpBehaviour
             var handSlider = Root("Canvas")?.GetComponentsInChildren<Slider>(true).FirstOrDefault(x => x != null && x.name == "HandDimmer");
             Assert.IsNotNull(genSlider, "Dimmer");
             Assert.IsNotNull(handSlider, "HandDimmer");
+            // In Play the editor turns on each trigger's notes for the Event History (off in VRChat): timed both ways.
+            var traced = Timings(ubs, genSlider, handSlider);
+            traced[1] = traced[1].Replace("## Time per event", "## With the Event History's notes on (editor Play only): time per event");
+            foreach (var ub in ubs.Values)
+                if (ub.TryGetProgramVariable(Tripwire.Core.CodeGenerator.TraceFlag, out bool _)) ub.SetProgramVariable(Tripwire.Core.CodeGenerator.TraceFlag, false);
             var timing = Timings(ubs, genSlider, handSlider);
+            timing[1] = timing[1].Replace("## Time per event", "## Notes off, as in VRChat: time per event");
+            timing.AddRange(traced);
             foreach (var kv in ubs) Assert.IsFalse(Flag(kv.Value, "_hasError"), kv.Key + " halted");
             // Same end state: both score boards counted every call.
             Assert.AreEqual(ubs["ScoreBoard"].GetProgramVariable("v_score"), ubs["HandScore"].GetProgramVariable("score"), "both score boards counted the same");
