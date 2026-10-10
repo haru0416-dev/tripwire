@@ -66,6 +66,77 @@ namespace Tripwire.Editor
                 En = "Blink every second", Icon = "Events/Timer", Color = "Common", Ja = "1 秒ごとに点滅する",
                 Make = t => t.events.Add(new KEvent { eventId = EventCatalog.TimerId, name = Texts.T("blink", "点滅"), actions = { NewAction("GameObject.ToggleActive") } }),
             },
+            new Starter
+            {
+                // A new, empty list of names; the person adds the admins' display names to it.
+                En = "A button only admins can press", Icon = "Events/Interact", Color = "Network", Ja = "管理者だけが押せるボタン",
+                Make = t => t.events.Add(new KEvent { eventId = EventCatalog.InteractId, gate = KGate.InList, gateList = NewPlayerList(), actions = { NewAction("GameObject.ToggleActive") } }),
+            },
+            new Starter
+            {
+                En = "Put objects back where they were", Icon = "Categories/Move", Color = "Move", Ja = "物を元の場所に戻す",
+                Make = t => t.events.Add(new KEvent { eventId = EventCatalog.InteractId, actions = { NewAction(ActionCatalog.RespawnId) } }),
+            },
+            new Starter
+            {
+                En = "Show how many players are here", Icon = "Events/OnPlayerJoined", Color = "Player", Ja = "いる人数を表示する",
+                Make = t =>
+                {
+                    KEvent Show(string id, float delay)
+                    {
+                        var text = NewAction("Text.SetText");
+                        text.args[1].stringValue = Texts.T("{playerCount} players", "{プレイヤー数} 人");
+                        return new KEvent { eventId = id, playerFilter = KPlayerFilter.Anyone, delaySeconds = delay, actions = { text } };
+                    }
+                    t.events.Add(Show("OnPlayerJoined", 0));
+                    // A second later: whether the count still includes the player who is leaving isn't documented.
+                    t.events.Add(Show("OnPlayerLeft", 1));
+                },
+            },
+            new Starter
+            {
+                En = "Count down from 10", Icon = "Events/Timer", Color = "Common", Ja = "10 からカウントダウン",
+                Make = t =>
+                {
+                    // Clicking sets the count and starts a timer; each second takes one off; the text follows; at 0 it stops.
+                    var left = UniqueName(Texts.T("left", "残り"), t.variables.Select(v => v.name));
+                    var timer = Texts.T("countdown", "カウントダウン");
+                    t.variables.Add(new KVariable { name = left, typeName = "System.Int32" });
+                    var set = NewAction(ActionCatalog.SetVariableId);
+                    set.args[0].stringValue = left;
+                    set.args[1].intValue = 10;
+                    var start = NewAction(ActionCatalog.TimerStartId);
+                    start.args[0].stringValue = timer;
+                    t.events.Add(new KEvent { eventId = EventCatalog.InteractId, actions = { set, start } });
+                    var minus = NewAction(ActionCatalog.AddVariableId);
+                    minus.args[0].stringValue = left;
+                    minus.args[1].intValue = -1;
+                    t.events.Add(new KEvent { eventId = EventCatalog.TimerId, name = timer, timerAutoStart = false, actions = { minus } });
+                    var text = NewAction("Text.SetText");
+                    text.args[1].stringValue = "{" + left + "}";
+                    t.events.Add(new KEvent { eventId = EventCatalog.VariableChangedId, name = left, actions = { text } });
+                    var stop = NewAction(ActionCatalog.TimerStopId);
+                    stop.args[0].stringValue = timer;
+                    t.events.Add(new KEvent { eventId = EventCatalog.VariableChangedId, name = left, actions = { stop },
+                                              conditions = { new KCondition { variable = left, op = KCompareOp.LessOrEqual, value = new KArg { intValue = 0 } } } });
+                },
+            },
+            new Starter
+            {
+                En = "Count each player's visits (saved)", Icon = "Categories/Saved", Color = "Variable", Ja = "来た回数を数える（保存）",
+                Make = t =>
+                {
+                    var visits = UniqueName(Texts.T("visits", "来た回数"), t.variables.Select(v => v.name));
+                    t.variables.Add(new KVariable { name = visits, typeName = "System.Int32", saved = true, saveKey = visits });
+                    var add = NewAction(ActionCatalog.AddVariableId);
+                    add.args[0].stringValue = visits;
+                    add.args[1].intValue = 1;
+                    var text = NewAction("Text.SetText");
+                    text.args[1].stringValue = Texts.T("Visit {" + visits + "}", "{" + visits + "} 回目");
+                    // After the saved value has come back (the card runs after it is restored).
+                    t.events.Add(new KEvent { eventId = "OnPlayerRestored", actions = { add, text } });
+                },
+            },
         };
 
         static GUIStyle starterStyle;

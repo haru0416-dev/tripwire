@@ -152,6 +152,41 @@ public class HandApi : UdonSharpBehaviour
     }
 }
 ",
+            ["HandGate"] = @"using UdonSharp;
+using UnityEngine;
+using VRC.SDKBase;
+using VRC.SDK3.Persistence;
+
+[UdonBehaviourSyncMode(BehaviourSyncMode.NoVariableSync)]
+public class HandGate : UdonSharpBehaviour
+{
+    public string[] banned;
+    int count;
+    bool known, allowed, restored;
+
+    public override void OnPlayerRestored(VRCPlayerApi player)
+    {
+        if (!player.isLocal) return;
+        int saved;
+        if (PlayerData.TryGetInt(player, ""hand_gate_count"", out saved)) count = saved;
+        restored = true;
+    }
+
+    public void Bump()
+    {
+        if (!known)
+        {
+            string me = Networking.LocalPlayer.displayName;
+            allowed = true;
+            foreach (var name in banned) if (name == me) { allowed = false; break; }
+            known = true;
+        }
+        if (!allowed) return;
+        count++;
+        if (restored) PlayerData.SetInt(""hand_gate_count"", count);
+    }
+}
+",
             ["HandMany"] = @"using UdonSharp;
 using UnityEngine;
 
@@ -219,6 +254,19 @@ public class HandMany : UdonSharpBehaviour
             run.actions.Add(new KAction { actionId = ActionCatalog.CalculateId, args = { new KArg { stringValue = "label" }, new KArg { stringValue = "n = " }, new KArg { intValue = 0 }, V("n") } });
             api.events.Add(run);
 
+            // Who can use it (everyone not in a list of 30 names: the whole list is checked) and a saved count.
+            var banned = Enumerable.Range(0, 30).Select(i => "not_here_" + i).ToArray();
+            var list = ScriptableObject.CreateInstance<TripwirePlayerList>();
+            list.names.AddRange(banned);
+            Directory.CreateDirectory(SceneDir);
+            AssetDatabase.DeleteAsset(SceneDir + "/Gate List.asset");
+            AssetDatabase.CreateAsset(list, SceneDir + "/Gate List.asset");
+            var gated = new GameObject("GenGate").AddComponent<TripwireTrigger>();
+            gated.variables.Add(new KVariable { name = "count", typeName = "System.Int32", saved = true, saveKey = "gen_gate_count" });
+            var bump = new KEvent { eventId = "Custom", name = "Bump", gate = KGate.NotInList, gateList = list };
+            bump.actions.Add(new KAction { actionId = "Variable.Add", args = { new KArg { stringValue = "count" }, new KArg { intValue = 1 } } });
+            gated.events.Add(bump);
+
             // Size only: four synced variables nothing sets (their setters are dead code) and one click.
             var unused = new GameObject("GenUnusedSynced").AddComponent<TripwireTrigger>();
             foreach (var (name, type) in new[] { ("b", "System.Boolean"), ("i", "System.Int32"), ("f", "System.Single"), ("s", "System.String") })
@@ -253,7 +301,9 @@ public class HandMany : UdonSharpBehaviour
             var handMany = Add("HandMany", "HandMany");
             Set(handMany, "targets", Enumerable.Range(0, Many).Select(i => new GameObject("HandMany_t" + i)).ToArray());
             var handApi = Add("HandApi", "HandApi");
-            foreach (var p in new[] { door, score, light, handMany, handApi }) UdonSharpEditorUtility.CopyProxyToUdon((UdonSharpBehaviour)p);
+            var handGate = Add("HandGate", "HandGate");
+            Set(handGate, "banned", banned);
+            foreach (var p in new[] { door, score, light, handMany, handApi, handGate }) UdonSharpEditorUtility.CopyProxyToUdon((UdonSharpBehaviour)p);
 
             Directory.CreateDirectory(SceneDir);
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -323,6 +373,7 @@ public class HandMany : UdonSharpBehaviour
                 ("Slider -> synced float -> light", "LightPanel", CodeGeneratorUi(), "HandLight", "OnSlider", genMove, handMove),
                 ("Toggle 64 objects", "GenMany", "Flip", "HandMany", "Flip", null, null),
                 ("TryParse out, Calculate, pos.y, text", "GenApi", "Run", "HandApi", "Run", null, null),
+                ("Not in a list of 30, saved count + 1", "GenGate", "Bump", "HandGate", "Bump", null, null),
             };
             var timing = new List<string> { "", "## Time per event on the Udon VM (us, median of " + Rounds + " rounds x " + CallsPerRound + " calls)", "case                                      gen      hand    ratio" };
             foreach (var c in cases)
@@ -350,7 +401,7 @@ public class HandMany : UdonSharpBehaviour
             if (!EditorApplication.isPlaying && !File.Exists(HandDir + "/HandDoor.cs")) WriteHand();
             yield return new RecompileScripts(false);
             LogAssert.ignoreFailingMessages = true;
-            if (!EditorApplication.isPlaying && Root("GenMany") == null)
+            if (!EditorApplication.isPlaying && Root("GenGate") == null)
             {
                 BuildScene();
                 TripwireCompiler.ApplyAll(TripwireCompiler.SceneTriggers());
@@ -374,7 +425,7 @@ public class HandMany : UdonSharpBehaviour
                 report.Add("");
                 report.Add("## Program size (generated vs hand-written)");
                 report.Add("pair                 instr(gen/hand)   extern(gen/hand)   heap(gen/hand)");
-                foreach (var (gen, hand) in new[] { ("Door", "HandDoor"), ("ScoreBoard", "HandScore"), ("LightPanel", "HandLight"), ("GenMany", "HandMany"), ("GenApi", "HandApi") })
+                foreach (var (gen, hand) in new[] { ("Door", "HandDoor"), ("ScoreBoard", "HandScore"), ("LightPanel", "HandLight"), ("GenMany", "HandMany"), ("GenApi", "HandApi"), ("GenGate", "HandGate") })
                 {
                     var g = Measure(ProgramOf(Root(gen)), "gen_" + gen);
                     var h = Measure(ProgramOf(Root(hand)), "hand_" + hand);
@@ -389,7 +440,7 @@ public class HandMany : UdonSharpBehaviour
             yield return new EnterPlayMode();
             LogAssert.ignoreFailingMessages = true;
 
-            var names = new[] { "Door", "HandDoor", "ScoreBoard", "HandScore", "LightPanel", "HandLight", "GenMany", "HandMany", "GenApi", "HandApi" };
+            var names = new[] { "Door", "HandDoor", "ScoreBoard", "HandScore", "LightPanel", "HandLight", "GenMany", "HandMany", "GenApi", "HandApi", "GenGate", "HandGate" };
             var missing = names.Where(n => Root(n) == null || Root(n).GetComponent<UdonBehaviour>() == null).ToList();
             Assert.IsEmpty(missing, "objects with an UdonBehaviour in play mode; roots: " + string.Join(",", SceneManager.GetActiveScene().GetRootGameObjects().Select(g => g.name).Where(n => !n.Contains("_t"))));
             var ubs = names.ToDictionary(n => n, n => Root(n).GetComponent<UdonBehaviour>());
@@ -414,6 +465,9 @@ public class HandMany : UdonSharpBehaviour
             foreach (var kv in ubs) Assert.IsFalse(Flag(kv.Value, "_hasError"), kv.Key + " halted");
             // Same end state: both score boards counted every call.
             Assert.AreEqual(ubs["ScoreBoard"].GetProgramVariable("v_score"), ubs["HandScore"].GetProgramVariable("score"), "both score boards counted the same");
+            // The gate let everyone through and the counts were saved (both start from what earlier runs saved).
+            Assert.IsTrue(VRC.SDK3.Persistence.PlayerData.TryGetInt(VRC.SDKBase.Networking.LocalPlayer, "gen_gate_count", out int genSaved) && genSaved == (int)ubs["GenGate"].GetProgramVariable("v_count"), "the generated count was saved");
+            Assert.IsTrue(VRC.SDK3.Persistence.PlayerData.TryGetInt(VRC.SDKBase.Networking.LocalPlayer, "hand_gate_count", out int handSaved) && handSaved == (int)ubs["HandGate"].GetProgramVariable("count"), "the hand-written count was saved");
             File.AppendAllLines("Logs/optimization-report.txt", timing);
             Debug.Log("[TripwireTest] " + string.Join("\n", timing));
             yield return new ExitPlayMode();

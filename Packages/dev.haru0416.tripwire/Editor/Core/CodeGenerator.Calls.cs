@@ -233,6 +233,9 @@ namespace Tripwire.Core
                         { Error(Texts.T("'" + text + "' is temporary: nothing outside the event can write it.", "変数「" + text + "」は一時的なので、イベントの外からは書き込めません。"), ev, act, first + i); return false; }
                         else if (TweenKind(c.Member) is ValueKind want && (target.Kind != want || target.Type.IsArray))
                         { Error(Texts.T(c.Member + " writes a " + Texts.TypeName(ParamType.Of(want)) + "; '" + text + "' is " + Texts.TypeName(target.Type) + ".", c.Member + " が書き込むのは " + Texts.TypeName(ParamType.Of(want)) + " ですが、変数「" + text + "」は " + Texts.TypeName(target.Type) + " です。"), ev, act, first + i); return false; }
+                        else if (target.SaveKey != null)
+                            Warn(Texts.T("This writes '" + text + "' directly, so it isn't saved (nor synced, nor its change event run). Set it from the update event instead.",
+                                         "変数「" + text + "」に直接書き込むので、保存されません（「変わったとき」も動きません）。途中で呼ぶイベントの中で、「変数を変える」で入れてください。"), ev, act, first + i);
                         else if (NeedsSetter(target))
                             Warn(Texts.T("This writes '" + text + "' directly: other players don't get it and its change event doesn't run. Set it from the update event instead.",
                                          "変数「" + text + "」に直接書き込むので、ほかの人に届かず、「変わったとき」も動きません。途中で呼ぶイベントの中で、「変数を変える」で入れてください。"), ev, act, first + i);

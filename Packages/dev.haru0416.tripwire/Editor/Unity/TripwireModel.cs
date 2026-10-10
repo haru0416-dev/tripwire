@@ -40,6 +40,7 @@ namespace Tripwire.Editor
                 var systemType = ResolveType(TypeNameOf(v));
                 var type = systemType == null ? null : UdonApi.VariableParamType(systemType);
                 var decl = new VariableDecl { Name = v.name, Synced = v.synced, Type = type ?? ParamType.OtherType(""), External = SetFromOutside(t, v.name), Temporary = v.temporary,
+                    SaveKey = v.saved ? (string.IsNullOrEmpty(v.saveKey) ? v.name : v.saveKey) : null,
                     Interpolate = t.continuousSync && v.synced && SmoothedKind(type) && VRC.Udon.UdonNetworkTypes.CanSyncLinear(systemType) };
                 // Object variables get their objects through a binding; other single values start from a constant.
                 if (type != null && type.Kind != ValueKind.Object && !type.IsArray) decl.Initial = ConstOf(type, v.initial);
@@ -55,6 +56,8 @@ namespace Tripwire.Editor
                     Broadcast = (Broadcast)(int)e.broadcast,
                     DelaySeconds = e.delaySeconds,
                     PlayerFilter = (PlayerFilter)(int)e.playerFilter,
+                    Gate = (Gate)(int)e.gate,
+                    GateNames = e.gateList != null ? e.gateList.names.Where(n => !string.IsNullOrWhiteSpace(n)).Select(n => n.Trim()).Distinct().ToList() : null,
                     InteractText = e.interactText,
                     HasUiSource = UiWiring.UiOf(e, EventCatalog.Get(e.eventId)) != null,
                     MatchAny = e.conditionsMatchAny,

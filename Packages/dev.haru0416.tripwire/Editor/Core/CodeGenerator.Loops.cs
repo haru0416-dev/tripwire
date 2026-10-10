@@ -44,6 +44,12 @@ namespace Tripwire.Core
                         var broadcast = a.Args.Count > 2 && a.Args[2]?.Constant is int b ? (Broadcast)b : Broadcast.Local;
                         To(e => e.EventId == EventCatalog.CustomId && e.Name == name, broadcast == Broadcast.Local ? LinkKind.Immediate : LinkKind.Network);
                     }
+                    if (a.ActionId == ActionCatalog.SendRandomEventId && ToSelf && a.Args.Count > 1 && a.Args[1]?.Constant is string names)
+                    {
+                        var broadcast = a.Args.Count > 2 && a.Args[2]?.Constant is int b ? (Broadcast)b : Broadcast.Local;
+                        foreach (var picked in RandomEventNames(names))
+                            To(e => e.EventId == EventCatalog.CustomId && e.Name == picked, broadcast == Broadcast.Local ? LinkKind.Immediate : LinkKind.Network);
+                    }
                     if (a.ActionId == ActionCatalog.SendEventDelayedId && ToSelf && a.Args.Count > 1 && a.Args[1]?.Constant is string later)
                         To(e => e.EventId == EventCatalog.CustomId && e.Name == later, LinkKind.Delayed);
                     if (ActionCatalog.Get(a.ActionId)?.ChangesValueEachTime == true && a.Args.Count > 0 && a.Args[0]?.Constant is string changed)

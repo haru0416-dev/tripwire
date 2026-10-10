@@ -186,7 +186,7 @@ namespace Tripwire.Editor
         void DrawDetails(int ei, KEvent e)
         {
             bool open = detailsOpen.Contains(e) || HasDiagnostics(d => d.Event == ei && d.Action < 0 && d.Condition >= 0);
-            var summary = Texts.BroadcastChoices[(int)e.broadcast] + "・"
+            var summary = (e.gate != KGate.Anyone ? Texts.GateChoices[(int)e.gate] + "・" : "") + Texts.BroadcastChoices[(int)e.broadcast] + "・"
                           + (e.delaySeconds > 0f ? T(e.delaySeconds + "s later", e.delaySeconds + " 秒後") : T("immediately", "すぐ")) + "・"
                           + (e.conditions.Count == 0 ? T("no conditions", "条件なし") : T(e.conditions.Count + " condition(s)", "条件 " + e.conditions.Count + " つ"));
             using (new EditorGUILayout.HorizontalScope())
@@ -201,9 +201,12 @@ namespace Tripwire.Editor
             using (new EditorGUILayout.VerticalScope(innerCardStyle))
             {
                 GUILayout.Label(T("Whose screen runs it", "誰の画面で実行する"));
-                e.broadcast = (KBroadcast)GUILayout.Toolbar((int)e.broadcast, Texts.BroadcastChoices);
+                e.broadcast = (KBroadcast)GUILayout.Toolbar((int)e.broadcast, Texts.BroadcastChoices, GUILayout.MinWidth(0)); // shrinks with the Inspector instead of scrolling it sideways
                 GUILayout.Label(T("With shared variables the result reaches everyone anyway. Usually leave this as is.",
                                   "変数を「同期する」にしていれば、変えた結果は自動で全員に届きます。ふつうはこのままで大丈夫です。"), captionLabel);
+                EditorGUILayout.Space(4);
+
+                DrawGate(e);
                 EditorGUILayout.Space(4);
 
                 using (new EditorGUILayout.HorizontalScope())
@@ -218,6 +221,45 @@ namespace Tripwire.Editor
                 GUILayout.Label(T("Conditions (run only when they hold)", "条件（満たすときだけ実行）"));
                 e.conditionsMatchAny = DrawConditions(ei, -1, e.conditions, e.conditionsMatchAny);
             }
+        }
+
+        /// <summary>"Who can use it": everyone, the owner, the master, the instance's creator, or a list of names.</summary>
+        void DrawGate(KEvent e)
+        {
+            e.gate = (KGate)EditorGUILayout.Popup(new GUIContent(T("Who can use it", "使える人"),
+                T("Checked on the screen of the player who sets it off, before anything is sent.", "動かした人の画面で、送る前に確かめます。")), (int)e.gate, Texts.GateChoices);
+            if (e.gate == KGate.InList || e.gate == KGate.NotInList)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    e.gateList = (TripwirePlayerList)EditorGUILayout.ObjectField(T("List", "リスト"), e.gateList, typeof(TripwirePlayerList), false);
+                    if (GUILayout.Button(T("New", "新しく作る"), EditorStyles.miniButton, GUILayout.ExpandWidth(false))) e.gateList = NewPlayerList();
+                }
+                if (e.gateList != null)
+                    GUILayout.Label(e.gateList.names.Count == 0 ? T("No names yet: select the list and add display names.", "名前がまだありません。リストを選んで、VRChat の表示名を足してください。")
+                                                                : string.Join(", ", e.gateList.names.Take(6)) + (e.gateList.names.Count > 6 ? " …" : ""), captionLabel);
+            }
+            if (e.gate != KGate.Anyone && e.eventId == EventCatalog.CustomId)
+                GUILayout.Label(T("Sent here from another screen, it is checked against the player of the screen that receives it.",
+                                  "ほかの画面から送られてきたときは、受け取った画面の人で確かめます。"), captionLabel);
+            if (e.gate != KGate.Anyone)
+                GUILayout.Label(e.gate == KGate.InstanceOwner
+                    ? T("In public instances the creator is reported not to be known. A modified client can get past any check made in the world.",
+                        "公開インスタンスでは、作った人が分からないという報告があります。また、ワールドの中の確認は、改造したクライアントには破られます。")
+                    : T("A modified client can get past any check made in the world: don't rely on it for anything that matters a lot.",
+                        "ワールドの中の確認は、改造したクライアントには破られます。大事なことには頼りきらないでください。"), captionLabel);
+        }
+
+        /// <summary>A new, empty player list asset (in Assets/Tripwire Player Lists), selected so names can be added.</summary>
+        static TripwirePlayerList NewPlayerList()
+        {
+            const string dir = "Assets/Tripwire Player Lists";
+            if (!AssetDatabase.IsValidFolder(dir)) AssetDatabase.CreateFolder("Assets", "Tripwire Player Lists");
+            var list = ScriptableObject.CreateInstance<TripwirePlayerList>();
+            AssetDatabase.CreateAsset(list, AssetDatabase.GenerateUniqueAssetPath(dir + "/Player List.asset"));
+            AssetDatabase.SaveAssets();
+            EditorGUIUtility.PingObject(list);
+            return list;
         }
 
         /// <summary>The end of a condition row: "…のとき" or "…でないとき" ("" / "(not)" in English).</summary>

@@ -100,4 +100,27 @@ public class InlineTests
         var src = Tidy(p);
         Assert.Contains("Debug.Log(\"GetComponent<UnityEngine.AudioSource>()\")", src);
     }
+
+    [Fact]
+    public void TextStartingWithACombiningMarkStaysText()
+    {
+        // Two GetComponent<Animator>() in one method are looked up once; the text beside them (a random event's names,
+        // starting with a combining mark) must stay as it is, whatever the culture's comparison makes of it.
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("ja-JP");
+        CodeGenerator.KeepBodiesSeparate = false;
+        try
+        {
+            var p = new TriggerProgram();
+            p.Events.Add(new EventBlock { EventId = "Interact", Actions = {
+                new ActionCall { ActionId = "Animator.Play", Args = { ArgValue.SelfObject(), ArgValue.Const("a") } },
+                new ActionCall { ActionId = "Animator.Play", Args = { ArgValue.SelfObject(), ArgValue.Const("b") } },
+                new ActionCall { ActionId = ActionCatalog.SendRandomEventId, Args = { ArgValue.SelfObject(), ArgValue.Const("\u20e4Open\nClose"), ArgValue.Const(0) } } } });
+            p.Events.Add(new EventBlock { EventId = EventCatalog.CustomId, Name = "Close", Actions = { Log("c") } });
+            var g = CodeGenerator.Generate(p);
+            Assert.Contains("GetComponent<UnityEngine.Animator>()", g.Source); // looked up once
+            Assert.Contains("\"\u20e4Open\"", g.Source);
+        }
+        finally { CodeGenerator.KeepBodiesSeparate = true; System.Globalization.CultureInfo.CurrentCulture = culture; }
+    }
 }

@@ -106,6 +106,19 @@ namespace Tripwire.Core
                 if (e.DelaySeconds < 0f || float.IsNaN(e.DelaySeconds) || float.IsInfinity(e.DelaySeconds))
                     Error(Texts.T("Delay must be zero or more seconds.", "遅らせる秒数は 0 以上にしてください。"), ev: i);
                 if (spec.Frequent) WarnFrequent(e, i);
+                if (e.Gate != Gate.Anyone && e.EventId == EventCatalog.VariableChangedId && vars.TryGetValue(e.Name ?? "", out var gatedVar) && gatedVar.Synced)
+                    Warn(Texts.T("A synced variable's change runs on every screen, and each checks its own player: the result differs between screens. Limit the card that changes it instead.",
+                                 "同期する変数の「変わったとき」は全員の画面で動き、それぞれの画面の人で確かめるので、画面ごとに結果が変わります。変数を変える側のカードで絞ってください。"), ev: i);
+                if (e.Gate != Gate.Anyone && e.EventId == EventCatalog.CustomId && SentHereOverNetwork(e.Name))
+                    Warn(Texts.T("This event is sent here over the network: each screen checks its own player, not the sender. Limit the card that sends it instead.",
+                                 "このイベントはネットワークで送られてくるので、送った人ではなく、受け取った画面の人で確かめます。送る側のカードで絞ってください。"), ev: i);
+                if (e.Gate == Gate.InList || e.Gate == Gate.NotInList)
+                {
+                    if (e.GateNames == null) { Error(Texts.T("Pick the list of players.", "プレイヤーのリストを選んでください。"), ev: i); return null; }
+                    if (e.GateNames.Count == 0)
+                        Warn(e.Gate == Gate.InList ? Texts.T("The list has no names, so nobody can use this.", "リストに名前がないので、誰も使えません。")
+                                                   : Texts.T("The list has no names, so everyone can use this.", "リストに名前がないので、誰でも使えます。"), ev: i);
+                }
                 return spec;
             }
 
@@ -115,12 +128,91 @@ namespace Tripwire.Core
 
             string Dispatch(int i)
             {
+                string run;
                 switch (p.Events[i].Broadcast)
                 {
-                    case Broadcast.All: return "SendCustomNetworkEvent(NetworkEventTarget.All, \"" + BodyName(i) + "\");";
-                    case Broadcast.Owner: return "SendCustomNetworkEvent(NetworkEventTarget.Owner, \"" + BodyName(i) + "\");";
-                    default: return BodyName(i) + "();";
+                    case Broadcast.All: run = "SendCustomNetworkEvent(NetworkEventTarget.All, \"" + BodyName(i) + "\");"; break;
+                    case Broadcast.Owner: run = "SendCustomNetworkEvent(NetworkEventTarget.Owner, \"" + BodyName(i) + "\");"; break;
+                    default: run = BodyName(i) + "();"; break;
                 }
+                // Who may set it off: checked here, where it fires, before anything is sent.
+                var gate = GateTest(i);
+                return gate == null ? run : "if (" + gate + ") " + run;
+            }
+
+            /// <summary>The test of a block's "Who can use it", or null for anyone.</summary>
+            string GateTest(int i)
+            {
+                switch (p.Events[i].Gate)
+                {
+                    case Gate.Owner: return "Networking.IsOwner(gameObject)";
+                    case Gate.Master: return "Networking.IsMaster";
+                    case Gate.InstanceOwner: return "Networking.IsInstanceOwner";
+                    case Gate.InList: return "(tw_Known || Tw_Know()) && " + InList(i);
+                    case Gate.NotInList: return "!((tw_Known || Tw_Know()) && " + InList(i) + ")";
+                    default: return null;
+                }
+            }
+
+            /// <summary>The lists of names the gates use, one per distinct list (cards sharing a list share its answer).</summary>
+            readonly List<List<string>> gateLists = new List<List<string>>();
+
+            /// <summary>The field saying whether the local player is in a block's list (filled once by Tw_Know).</summary>
+            string InList(int i)
+            {
+                var names = p.Events[i].GateNames ?? new List<string>();
+                int n = gateLists.FindIndex(l => l.SequenceEqual(names));
+                if (n < 0) { gateLists.Add(names); n = gateLists.Count - 1; }
+                return "tw_In" + n;
+            }
+
+            /// <summary>Whether this trigger sends itself the Custom event <paramref name="name"/> to all players or the owner.</summary>
+            bool SentHereOverNetwork(string name) => p.Events.Any(e => ActionCall.Flatten(e.Actions).Any(a =>
+                (a.ActionId == ActionCatalog.SendEventId || a.ActionId == ActionCatalog.SendRandomEventId)
+                && a.Args.Count > 2 && a.Args[0]?.Source == ArgSource.Self && a.Args[2]?.Constant is int how && how != 0
+                && a.Args[1]?.Constant is string names && (a.ActionId == ActionCatalog.SendEventId ? names == name : RandomEventNames(names).Contains(name))));
+
+            /// <summary>
+            /// Whether the local player is in each list, worked out the first time a gate asks: their name and the lists
+            /// stay the same for the whole visit, so a gate on a frequent event costs a field read.
+            /// </summary>
+            void EmitGates()
+            {
+                if (gateLists.Count == 0) return;
+                // The names as data, not code: filled by the editor (ConstantsInFields) or as field initializers, which U#
+                // also bakes into the program's data instead of building the array in code.
+                fields.Append("        bool tw_Known;\n");
+                for (int n = 0; n < gateLists.Count; n++)
+                {
+                    if (ConstantsInFields)
+                    {
+                        fields.Append("        public string[] tw_Gate").Append(n).Append(";\n");
+                        Result.Bindings.Add(new FieldBinding { Field = "tw_Gate" + n, Kind = BindingKind.Constant, Constant = gateLists[n].ToArray() });
+                    }
+                    else fields.Append("        string[] tw_Gate").Append(n).Append(" = new string[] { ").Append(string.Join(", ", gateLists[n].Select(StringLiteral))).Append(" };\n");
+                    fields.Append("        bool tw_In").Append(n).Append(";\n");
+                }
+                methods.Append("        bool Tw_Know()\n        {\n");
+                methods.Append("            VRCPlayerApi tw_P = Networking.LocalPlayer;\n");
+                methods.Append("            if (!Utilities.IsValid(tw_P)) return false;\n");
+                methods.Append("            string tw_Name = tw_P.displayName;\n");
+                for (int n = 0; n < gateLists.Count; n++)
+                    methods.Append("            tw_In").Append(n).Append(" = Tw_Listed(tw_Gate").Append(n).Append(", tw_Name);\n");
+                methods.Append("            tw_Known = true;\n            return true;\n        }\n\n");
+                methods.Append("        bool Tw_Listed(string[] names, string name)\n        {\n");
+                methods.Append("            for (int tw_I = 0; tw_I < names.Length; tw_I++) if (names[tw_I] == name) return true;\n");
+                methods.Append("            return false;\n        }\n\n");
+            }
+
+            /// <summary>
+            /// When every click card is for some players only, and that doesn't change during a visit (a list, the
+            /// instance's creator), the others can't even point at it: DisableInteractive at Start.
+            /// </summary>
+            string InteractGate()
+            {
+                var clicks = Enumerable.Range(0, p.Events.Count).Where(i => p.Events[i].EventId == "Interact").ToList();
+                if (clicks.Count == 0 || clicks.Any(i => p.Events[i].Gate != Gate.InstanceOwner && p.Events[i].Gate != Gate.InList && p.Events[i].Gate != Gate.NotInList)) return "";
+                return "            DisableInteractive = !(" + string.Join(" || ", clicks.Select(GateTest).Distinct()) + ");\n";
             }
 
             /// <summary>Action index used for a listen event's registration arguments (diagnostics, URL field names).</summary>
@@ -159,6 +251,10 @@ namespace Tripwire.Core
                     if (ChangedVariables(a).Any(changed => vars.TryGetValue(changed, out var cv) && cv.Synced))
                         Once("sync", k, "Changing a synced variable many times a second sends it each time it changes, which can delay other sync. Change it on a less frequent event.",
                              "1\u00A0秒に何度も同期する変数を変えると、変わるたびに送信され、ほかの同期が遅れることがあります。もっと少ない回数のイベントで変えてください。");
+                    // PlayerData sends all of the player's data again on any change.
+                    if (ChangedVariables(a).Any(changed => vars.TryGetValue(changed, out var sv) && sv.SaveKey != null))
+                        Once("save", k, "Changing a saved variable many times a second sends all of the player's saved data each time it changes. Change it on a less frequent event.",
+                             "1\u00A0秒に何度も保存する変数を変えると、変わるたびに、その人の保存データがすべて送られます。もっと少ない回数のイベントで変えてください。");
                 }
             }
 
@@ -198,6 +294,7 @@ namespace Tripwire.Core
                         methods.Append(spec.Shape == EventShape.Override ? "        public override void " : "        void ")
                             .Append(spec.Method).Append('(').Append(sig).Append(")\n        {\n");
                         if (spec.Method == EventCatalog.StartId) methods.Append(StartupCalls(specs));
+                        if (spec.Method == "OnPlayerRestored" && SavesVariables()) methods.Append("            Tw_Restore(").Append(spec.Params[0].Name).Append(");\n");
                         if (spec.Method == EventCatalog.DeserializationId) methods.Append(UseSyncReceived());
                         foreach (var ep in spec.Params)
                             methods.Append("            ").Append(ArgField(spec, ep.Name)).Append(" = ").Append(ep.Name).Append(";\n");
@@ -224,6 +321,10 @@ namespace Tripwire.Core
                 // A Start method for what runs at start (registrations, timers) when the trigger has no Start event.
                 if (!seen.Contains(EventCatalog.StartId) && StartupCalls(specs).Length > 0)
                     methods.Append("        void Start()\n        {\n").Append(StartupCalls(specs)).Append("        }\n\n");
+
+                // Saved variables come back when the player's data is loaded, also when the trigger has no such event.
+                if (!seen.Contains("OnPlayerRestored") && SavesVariables())
+                    methods.Append("        public override void OnPlayerRestored(VRCPlayerApi player)\n        {\n            Tw_Restore(player);\n        }\n\n");
 
                 // Custom events: one public method per name.
                 var customNames = new HashSet<string>(StringComparer.Ordinal);
@@ -268,7 +369,8 @@ namespace Tripwire.Core
 
             /// <summary>Statements run first thing in Start: listener registration, auto-starting timers.</summary>
             string StartupCalls(EventSpec[] specs) =>
-                (NeedsRegistration() ? "            Tw_Register();\n" : "") + (TimersToStart(specs).Any() ? "            Tw_StartTimers();\n" : "");
+                InteractGate() + (RemembersHomes() ? "            Tw_RememberHomes();\n" : "")
+                + (NeedsRegistration() ? "            Tw_Register();\n" : "") + (TimersToStart(specs).Any() ? "            Tw_StartTimers();\n" : "");
 
             /// <summary>Whether an OnDeserialization method came from event blocks (synced variables then join it).</summary>
             bool deserializationEmitted;
@@ -305,7 +407,7 @@ namespace Tripwire.Core
                 var code = body.ToString();
                 foreach (var v in vars.Values.Where(x => x.Temporary))
                     if (System.Text.RegularExpressions.Regex.IsMatch(code, @"\b" + FieldOf(v.Name) + @"\b"))
-                        body.Insert(0, "            " + TypeName(v.Type) + " " + FieldOf(v.Name) + " = " + Literal(v.Kind, v.Initial ?? DefaultOf(v.Kind)) + ";\n");
+                        body.Insert(0, "            " + TypeName(v.Type) + " " + FieldOf(v.Name) + " = " + ConstantExpr(v.Kind, v.Initial ?? DefaultOf(v.Kind), "V" + p.Variables.IndexOf(v)) + ";\n");
 
                 // Network-called bodies must be public; local ones stay private. The delayed half must be public (it is run by
                 // name) but keeps a '_' name so it is not network-callable.
@@ -313,7 +415,7 @@ namespace Tripwire.Core
                 if (e.DelaySeconds > 0f)
                 {
                     methods.Append(head).Append(BodyName(i)).Append("()\n        {\n");
-                    methods.Append("            SendCustomEventDelayedSeconds(\"_Tw_R").Append(i).Append("\", ").Append(Literal(ValueKind.Float, e.DelaySeconds)).Append(");\n");
+                    methods.Append("            SendCustomEventDelayedSeconds(\"_Tw_R").Append(i).Append("\", ").Append(ConstantExpr(ValueKind.Float, e.DelaySeconds, "Delay" + i)).Append(");\n");
                     methods.Append("        }\n\n");
                     methods.Append("        public void _Tw_R").Append(i).Append("()\n        {\n").Append(body).Append("        }\n\n");
                 }

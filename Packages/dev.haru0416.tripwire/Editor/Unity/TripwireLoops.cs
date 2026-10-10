@@ -58,8 +58,10 @@ namespace Tripwire.Editor
                     {
                         var a = flat[k];
                         if (!SendsToObjects(a)) continue;
-                        var name = a.args.Count > 1 ? a.args[1].stringValue : null;
-                        if (string.IsNullOrEmpty(name)) continue;
+                        var names = a.args.Count < 2 ? new List<string>()
+                            : a.actionId == ActionCatalog.SendRandomEventId ? CodeGenerator.RandomEventNames(a.args[1].stringValue) : new List<string> { a.args[1].stringValue };
+                        names.RemoveAll(string.IsNullOrEmpty);
+                        if (names.Count == 0) continue;
                         var how = a.actionId == ActionCatalog.SendEventDelayedId ? LinkKind.Delayed
                             : a.args.Count > 2 && a.args[2].intValue != 0 ? LinkKind.Network : LinkKind.Immediate;
                         foreach (var target in Targets(a))
@@ -69,7 +71,7 @@ namespace Tripwire.Editor
                             for (int bj = 0; bj < target.events.Count; bj++)
                             {
                                 var e = target.events[bj];
-                                if (e.eventId != EventCatalog.CustomId || e.name != name) continue;
+                                if (e.eventId != EventCatalog.CustomId || !names.Contains(e.name)) continue;
                                 var kind = how == LinkKind.Network || e.broadcast != KBroadcast.Local ? LinkKind.Network
                                     : how == LinkKind.Delayed || e.delaySeconds > 0f ? LinkKind.Delayed : LinkKind.Immediate;
                                 links.Add(new Link { From = Node(ti, bi), To = Node(ui, bj), Act = k, Kind = kind, Across = true });
@@ -120,7 +122,7 @@ namespace Tripwire.Editor
         }
 
         static bool SendsToObjects(KAction a) =>
-            (a.actionId == ActionCatalog.SendEventId || a.actionId == ActionCatalog.SendEventDelayedId)
+            (a.actionId == ActionCatalog.SendEventId || a.actionId == ActionCatalog.SendEventDelayedId || a.actionId == ActionCatalog.SendRandomEventId)
             && a.args.Count > 0 && a.args[0].source == KArgSource.Objects;
 
         /// <summary>The triggers among an action's dragged-in targets (a trigger's object, or the UdonBehaviour it made).</summary>

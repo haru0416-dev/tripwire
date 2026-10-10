@@ -98,6 +98,7 @@ namespace Tripwire.Editor
                             variable.initial = new KArg();
                             variable.synced = false;
                             variable.temporary = false;
+                            variable.saved = false;
                         }, T("Change Variable Type", "変数の型を変更"));
                     });
                 }
@@ -143,6 +144,14 @@ namespace Tripwire.Editor
                     }
                     if (canSync) v.synced = EditorGUILayout.ToggleLeft(T("Sync", "同期する"), v.synced);
                 }
+            }
+            if (v.saved)
+            {
+                // The name in PlayerData: kept when the variable is renamed; the same name in other triggers is the same value.
+                v.saveKey = EditorGUILayout.TextField(new GUIContent(T("Save name", "保存の名前"),
+                    T("The name it is saved under. Variables saved under the same name, in any trigger of this world, share one value.",
+                      "保存するときの名前です。このワールドのどのトリガーでも、同じ名前で保存した変数は同じ値になります。")), v.saveKey);
+                if (string.IsNullOrWhiteSpace(v.saveKey)) v.saveKey = v.name;
             }
             int vi = i;
             DrawDiagnostics(d => d.Variable == vi);
@@ -192,6 +201,8 @@ namespace Tripwire.Editor
         /// <summary>The hover text of "最初の値": when the variable has it, which depends on how it is kept.</summary>
         static string InitialTip(KVariable v) =>
             v.temporary ? T("Each time an event uses it, it starts from this value.", "イベントが動くたびに、この値から始まります。")
+            : v.saved ? T("The value for players who come for the first time. Those who have been here get what was saved for them.",
+                          "初めて来た人の値です。前に来たことのある人には、保存しておいた値が戻ります。")
             : v.synced ? T("The value when the world is loaded. Players who join later get the current value instead.",
                            "ワールドを読み込んだときの値です。あとから来た人には、この値ではなく、そのときの値が届きます。")
             : T("The value when the world is loaded, on each player's screen. Actions change it from there.",
@@ -204,20 +215,28 @@ namespace Tripwire.Editor
                 if (!set.Contains(stem + n)) return stem + n;
         }
 
-        /// <summary>How a variable keeps its value: as usual, synced to everyone, or temporary (each event starts afresh).</summary>
+        /// <summary>
+        /// How a variable keeps its value: as usual, synced to everyone, temporary (each event starts afresh), or saved
+        /// for each player (given back when they come again).
+        /// </summary>
         void KeepingPopup(KVariable v, bool canSync, bool canBeTemporary)
         {
-            var modes = new List<(string label, string tip, bool synced, bool temporary)>
+            var modes = new List<(string label, string tip, bool synced, bool temporary, bool saved)>
             {
-                (T("Not synced", "同期しない"), T("Each player has a value of their own, kept until it is changed.", "プレイヤーごとに別の値を持ちます。変えるまでその値のままです。"), false, false),
+                (T("Not synced", "同期しない"), T("Each player has a value of their own, kept until it is changed.", "プレイヤーごとに別の値を持ちます。変えるまでその値のままです。"), false, false, false),
             };
-            if (canSync) modes.Add((T("Synced", "同期する"), T("Shared: players who join later get the same state.", "全員に届き、あとから来た人にも同じ値が届きます。"), true, false));
-            if (canBeTemporary) modes.Add((T("Temporary", "一時的"), T("Starts from its initial value every time an event uses it (a local variable).", "イベントが動くたびに最初の値から始まります（ほかのトリガーからは見えません）。"), false, true));
-            if (modes.Count == 1) { v.synced = v.temporary = false; return; }
-            int now = Math.Max(0, modes.FindIndex(m => m.synced == v.synced && m.temporary == v.temporary));
+            if (canSync) modes.Add((T("Synced", "同期する"), T("Shared: players who join later get the same state.", "全員に届き、あとから来た人にも同じ値が届きます。"), true, false, false));
+            if (canBeTemporary) modes.Add((T("Temporary", "一時的"), T("Starts from its initial value every time an event uses it (a local variable).", "イベントが動くたびに最初の値から始まります（ほかのトリガーからは見えません）。"), false, true, false));
+            if (CodeGenerator.SavedAs(TripwireModel.VariableType(v)) != null)
+                modes.Add((T("Saved", "保存する"), T("Each player's own value, saved (VRChat's PlayerData) and given back when they come again.", "その人の値を保存し、次に来たときに戻します（VRChat の PlayerData）。"), false, false, true));
+            if (modes.Count == 1) { v.synced = v.temporary = v.saved = false; return; }
+            int now = Math.Max(0, modes.FindIndex(m => m.synced == v.synced && m.temporary == v.temporary && m.saved == v.saved));
             int picked = EditorGUILayout.Popup(now, modes.Select(m => new GUIContent(m.label, m.tip)).ToArray(), GUILayout.Width(92));
             v.synced = modes[picked].synced;
             v.temporary = modes[picked].temporary;
+            v.saved = modes[picked].saved;
+            // Saved under the name it has now, so renaming the variable later keeps what players saved.
+            if (v.saved && string.IsNullOrEmpty(v.saveKey)) v.saveKey = v.name;
         }
     }
 }

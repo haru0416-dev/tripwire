@@ -257,9 +257,13 @@ namespace Tripwire.Core
             { "GameObject.ToggleActive", ("オブジェクトの表示を切り替える", "表示されていれば非表示に、非表示なら表示にします。") },
             { "Collider.SetEnabled", ("コライダーのオン・オフ", "見た目はそのままで、当たり判定だけを切り替えます。") },
             { "Renderer.SetEnabled", ("レンダラーのオン・オフ", "当たり判定は残して、見た目（描画）だけを切り替えます。") },
+            { "Behaviour.ToggleEnabled", ("コンポーネントのオン・オフを切り替える", "ライトや音源などのコンポーネントを、有効なら無効に、無効なら有効にします。") },
+            { "Collider.ToggleEnabled", ("コライダーのオン・オフを切り替える", "当たり判定を、有効なら無効に、無効なら有効にします。") },
+            { "Renderer.ToggleEnabled", ("レンダラーのオン・オフを切り替える", "見た目（描画）を、出ていれば消し、消えていれば出します。当たり判定はそのままです。") },
             { "Behaviour.SetEnabled", ("コンポーネントのオン・オフ", "ライトや音源などのコンポーネントを有効・無効にします。") },
             { "Transform.SetPosition", ("位置を変える", "オブジェクトを指定した位置へ動かします（自分の画面でだけ動きます）。") },
             { "Transform.MoveTo", ("別のオブジェクトの位置へ動かす", "オブジェクトを、指定したオブジェクトと同じ位置・向きへ動かします（自分の画面でだけ動きます）。") },
+            { "Transform.Respawn", ("最初の位置に戻す", "オブジェクトを、ワールドが始まったときの位置と向きに戻します。VRC Object Sync が付いていれば全員の画面で戻ります。持っているピックアップは手から離します。") },
             { "Animator.SetTrigger", ("Animator の Trigger を送る", "Animator の Trigger パラメータを送ります。") },
             { "Animator.SetBool", ("Animator の Bool を変える", "Animator の Bool パラメータを変えます。") },
             { "Animator.SetInteger", ("Animator の Int を変える", "Animator の Int パラメータを変えます。") },
@@ -295,12 +299,14 @@ namespace Tripwire.Core
             { "Variable.Set", ("変数に値を入れる", "変数の値を変えます。同期した変数なら全員に届きます。") },
             { "Variable.Toggle", ("変数を切り替える", "オン/オフの変数のオンとオフを入れ替えます。") },
             { "Variable.Add", ("変数に足す", "数の変数に値を足します（引くときはマイナス）。") },
+            { "Variable.RandomItem", ("リストからランダムに選ぶ", "オブジェクトのリストから 1 つをランダムに選んで、オブジェクトの変数に入れます。") },
             { "Variable.GetComponent", ("コンポーネントを取り出す", "オブジェクト（またはその子や親）のコンポーネントを、オブジェクトの変数に入れます。どのコンポーネントかは、変数の型で決まります。") },
             { "Variable.Calculate", ("計算して変数に入れる", "A と B を + − × ÷ %（余り）で計算して、変数に入れます。数・位置・色を計算でき、文字は + でつなげられます。") },
             { "Trigger.SetVariable", ("ほかのトリガーの変数を変える", "ほかのトリガーの変数を変えます。その変数が同期していれば全員に届き、「変数が変わったとき」も動きます。続けて「カスタムイベントを呼ぶ」と、値を渡して呼べます。") },
             { "Trigger.GetVariable", ("ほかのトリガーの変数を読む", "ほかのトリガーの変数の値を、このトリガーの変数に入れます。") },
             { "Event.Send", ("カスタムイベントを呼ぶ", "トリガーやスクリプトのカスタムイベントを、名前で呼び出します。") },
             { "Event.SendDelayed", ("何秒か後にカスタムイベントを呼ぶ", "何秒か後に、カスタムイベントを名前で呼び出します。") },
+            { "Event.SendRandom", ("カスタムイベントをランダムに呼ぶ", "名前を書いたカスタムイベントのどれか 1 つを、ランダムに選んで呼び出します。対象が何個あっても、同じイベントが届きます。") },
             { "Script.Call", ("ほかのスクリプトを使う", "ほかの UdonSharp スクリプト（ギミックや動画プレイヤーなど）の機能を呼んだり、値を変えたりします。") },
             { "Udon.Call", ("Udon の機能を呼ぶ（Udon API）", "Udon で使えるメソッドやプロパティを、検索して何でも呼べます。") },
             { "Debug.Log", ("ログを出す", "Unity のコンソールにメッセージを出します（確認用）。") },
@@ -347,6 +353,8 @@ namespace Tripwire.Core
             { "a", ("A", "A") },
             { "b", ("B", "B") },
             { "operator", ("Operator", "計算") },
+            { "events", ("Events (one per line)", "呼ぶイベント（1 行に 1 つ）") },
+            { "list", ("List", "リスト") },
             { "source", ("Object", "取り出すもと") },
             { "where", ("Look in", "探す場所") },
             { "min", ("Min", "最小") },
@@ -357,7 +365,6 @@ namespace Tripwire.Core
             { "into", ("Into", "入れる変数") },
             { "count", ("Times", "回数") },
             { "counter", ("Round into", "何回目か") },
-            { "list", ("List", "リスト") },
             { "item", ("Each item into", "中身を入れる変数") },
         };
 
@@ -370,6 +377,9 @@ namespace Tripwire.Core
         public static readonly string[] BroadcastChoicesJa = { "自分だけ（Local）", "全員（All）", "オーナーだけ（Owner）" };
         public static readonly string[] BroadcastChoicesEn = { "Only my screen", "Everyone's screen", "Owner's screen" };
         public static string[] BroadcastChoices => Japanese ? BroadcastChoicesJa : BroadcastChoicesEn;
+        public static string[] GateChoices => Japanese
+            ? new[] { "誰でも", "オーナーだけ", "マスターだけ", "インスタンスを作った人だけ", "リストの人だけ", "リスト以外の人" }
+            : new[] { "Anyone", "The owner", "The master", "The instance's creator", "People in a list", "People not in a list" };
         public static string[] WhereChoices => Japanese ? new[] { "このオブジェクト", "子も探す", "親も探す" } : new[] { "This object", "Children too", "Parents too" };
 
         // ---- type names ----

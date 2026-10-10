@@ -131,9 +131,14 @@ namespace Tripwire.Core
         public bool External;
         /// <summary>Back to its initial value at the start of every event that uses it (a local, in effect).</summary>
         public bool Temporary;
+        /// <summary>Saved for each player under this name (PlayerData) and restored when they come again; null: not saved.</summary>
+        public string SaveKey;
         /// <summary>With continuous sync: smoothed between updates (the editor knows which types Udon can interpolate).</summary>
         public bool Interpolate;
     }
+
+    /// <summary>Who may set an event block off. Mirrors KGate.</summary>
+    public enum Gate { Anyone = 0, Owner = 1, Master = 2, InstanceOwner = 3, InList = 4, NotInList = 5 }
 
     public sealed class EventBlock
     {
@@ -144,6 +149,10 @@ namespace Tripwire.Core
         public Broadcast Broadcast;
         public float DelaySeconds;
         public PlayerFilter PlayerFilter;
+        /// <summary>Who may set this block off, checked where it fires (before it is sent anywhere).</summary>
+        public Gate Gate;
+        /// <summary>Gate InList / NotInList: the players' display names; null when no list is picked.</summary>
+        public List<string> GateNames;
         /// <summary>Interact only: hover text.</summary>
         public string InteractText;
         /// <summary>Ui events: whether a UI element is assigned (bound into the generated field tw_Ui{i}).</summary>

@@ -16,8 +16,8 @@ namespace Tripwire
     public class TripwireTrigger : MonoBehaviour, VRC.SDKBase.IEditorOnly
     {
         /// <summary>The format this trigger's data was saved in; the editor upgrades older data when it loads it.</summary>
-        public const int CurrentDataVersion = 1;
-        /// <summary>0: saved before versions existed (the same format as 1).</summary>
+        public const int CurrentDataVersion = 2;
+        /// <summary>0: saved before versions existed (the same format as 1). 2 added who can use a card and saved variables.</summary>
         public int dataVersion;
 
         public List<KVariable> variables = new List<KVariable>();
@@ -41,6 +41,8 @@ namespace Tripwire
     public enum KValueType { Bool = 0, Int = 1, Float = 2, String = 3, Vector3 = 4 }
     public enum KBroadcast { Local = 0, All = 1, Owner = 2 }
     public enum KPlayerFilter { Anyone = 0, LocalPlayer = 1, OtherPlayers = 2 }
+    /// <summary>Who may set the card off (checked on their own screen, before anything is sent).</summary>
+    public enum KGate { Anyone = 0, Owner = 1, Master = 2, InstanceOwner = 3, InList = 4, NotInList = 5 }
     public enum KCompareOp { Equal = 0, NotEqual = 1, Less = 2, LessOrEqual = 3, Greater = 4, GreaterOrEqual = 5 }
     public enum KArgSource { Constant = 0, Objects = 1, Variable = 2, EventParam = 3, Self = 4, LocalPlayer = 5 }
 
@@ -55,6 +57,10 @@ namespace Tripwire
         public bool synced;
         /// <summary>Starts from its initial value every time an event runs (like a local variable).</summary>
         public bool temporary;
+        /// <summary>Saved for each player (VRChat's PlayerData) and given back when they come again.</summary>
+        public bool saved;
+        /// <summary>The name it is saved under; empty means the variable's name (kept when the variable is renamed).</summary>
+        public string saveKey = "";
         /// <summary>Constant initial value, or objects (several for array types) assigned in the Inspector.</summary>
         public KArg initial = new KArg();
     }
@@ -68,6 +74,9 @@ namespace Tripwire
         public KBroadcast broadcast;
         public float delaySeconds;
         public KPlayerFilter playerFilter = KPlayerFilter.LocalPlayer;
+        /// <summary>Who may set this card off; InList / NotInList use <see cref="gateList"/>.</summary>
+        public KGate gate;
+        public TripwirePlayerList gateList;
         /// <summary>Hover text for Interact; empty uses VRChat's default ("Use").</summary>
         public string interactText = "";
         /// <summary>UI events: the Button / Toggle / Slider whose event runs this (wired by Tripwire on apply).</summary>

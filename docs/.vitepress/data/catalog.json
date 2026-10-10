@@ -3782,6 +3782,35 @@
       "hasConditions": false
     },
     {
+      "id": "Collider.ToggleEnabled",
+      "category": "Show",
+      "code": "Collider.ToggleEnabled",
+      "name": {
+        "ja": "コライダーのオン・オフを切り替える",
+        "en": "Toggle Collider Enabled"
+      },
+      "description": {
+        "ja": "当たり判定を、有効なら無効に、無効なら有効にします。",
+        "en": "Flip colliders between enabled and disabled."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Colliderのリスト",
+            "en": "Collider list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.enabled = !{targets}.enabled;",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
       "id": "Renderer.SetEnabled",
       "category": "Show",
       "code": "Renderer.SetEnabled",
@@ -3822,6 +3851,35 @@
       "hasConditions": false
     },
     {
+      "id": "Renderer.ToggleEnabled",
+      "category": "Show",
+      "code": "Renderer.ToggleEnabled",
+      "name": {
+        "ja": "レンダラーのオン・オフを切り替える",
+        "en": "Toggle Renderer Enabled"
+      },
+      "description": {
+        "ja": "見た目（描画）を、出ていれば消し、消えていれば出します。当たり判定はそのままです。",
+        "en": "Flip renderers between shown and hidden, keeping the object."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Rendererのリスト",
+            "en": "Renderer list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.enabled = !{targets}.enabled;",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
       "id": "Behaviour.SetEnabled",
       "category": "Show",
       "code": "Behaviour.SetEnabled",
@@ -3858,6 +3916,35 @@
         }
       ],
       "template": "{targets}.enabled = {enabled};",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Behaviour.ToggleEnabled",
+      "category": "Show",
+      "code": "Behaviour.ToggleEnabled",
+      "name": {
+        "ja": "コンポーネントのオン・オフを切り替える",
+        "en": "Toggle Component Enabled"
+      },
+      "description": {
+        "ja": "ライトや音源などのコンポーネントを、有効なら無効に、無効なら有効にします。",
+        "en": "Flip components (Light, AudioSource, ...) between enabled and disabled."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "Behaviourのリスト",
+            "en": "Behaviour list"
+          },
+          "default": null
+        }
+      ],
+      "template": "{targets}.enabled = !{targets}.enabled;",
       "holdsActions": false,
       "hasConditions": false
     },
@@ -3938,6 +4025,35 @@
         }
       ],
       "template": "{targets}.SetPositionAndRotation({destination}.position, {destination}.rotation);",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Transform.Respawn",
+      "category": "Move",
+      "code": "Transform.Respawn",
+      "name": {
+        "ja": "最初の位置に戻す",
+        "en": "Respawn"
+      },
+      "description": {
+        "ja": "オブジェクトを、ワールドが始まったときの位置と向きに戻します。VRC Object Sync が付いていれば全員の画面で戻ります。持っているピックアップは手から離します。",
+        "en": "Put objects back where they were when the world started (with VRC Object Sync: for everyone). A held pickup is dropped first."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "オブジェクトのリスト",
+            "en": "Object list"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
       "holdsActions": false,
       "hasConditions": false
     },
@@ -4976,6 +5092,46 @@
       "hasConditions": false
     },
     {
+      "id": "Variable.RandomItem",
+      "category": "Variable",
+      "code": "Variable.RandomItem",
+      "name": {
+        "ja": "リストからランダムに選ぶ",
+        "en": "Random Item"
+      },
+      "description": {
+        "ja": "オブジェクトのリストから 1 つをランダムに選んで、オブジェクトの変数に入れます。",
+        "en": "Put one object of a list, picked at random, into an object variable."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "type": {
+            "ja": "変数",
+            "en": "Variable"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "リスト",
+            "en": "List"
+          },
+          "type": {
+            "ja": "オブジェクトのリスト",
+            "en": "Object list"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
       "id": "Variable.GetComponent",
       "category": "Variable",
       "code": "Variable.GetComponent",
@@ -5389,6 +5545,57 @@
         }
       ],
       "template": "{targets}.SendCustomEventDelayedSeconds({event}, {seconds});",
+      "holdsActions": false,
+      "hasConditions": false
+    },
+    {
+      "id": "Event.SendRandom",
+      "category": "Link",
+      "code": "Event.SendRandom",
+      "name": {
+        "ja": "カスタムイベントをランダムに呼ぶ",
+        "en": "Send Random Event"
+      },
+      "description": {
+        "ja": "名前を書いたカスタムイベントのどれか 1 つを、ランダムに選んで呼び出します。対象が何個あっても、同じイベントが届きます。",
+        "en": "Run one of several Custom events, picked at random (the same one on every target)."
+      },
+      "parameters": [
+        {
+          "name": {
+            "ja": "対象",
+            "en": "Targets"
+          },
+          "type": {
+            "ja": "UdonBehaviourのリスト",
+            "en": "UdonBehaviour list"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "呼ぶイベント（1 行に 1 つ）",
+            "en": "Events (one per line)"
+          },
+          "type": {
+            "ja": "文字",
+            "en": "Text"
+          },
+          "default": null
+        },
+        {
+          "name": {
+            "ja": "誰の画面で",
+            "en": "Run on"
+          },
+          "type": {
+            "ja": "整数",
+            "en": "Integer"
+          },
+          "default": null
+        }
+      ],
+      "template": null,
       "holdsActions": false,
       "hasConditions": false
     },

@@ -29,6 +29,14 @@ public class LoopTests
     }
 
     [Fact]
+    public void ACounterMissingFromTheSavedDataIsJustNotUsed()
+    {
+        // The counter is optional: null (the editor's "no input saved") counts like an empty one; a missing count is an error.
+        Assert.False(CodeGenerator.Generate(Prog(Loop(ActionCatalog.RepeatId, new[] { Log("x") }, ArgValue.Const(5), null))).HasErrors);
+        Assert.True(CodeGenerator.Generate(Prog(Loop(ActionCatalog.RepeatId, new[] { Log("x") }, null, ArgValue.Const("")))).HasErrors);
+    }
+
+    [Fact]
     public void RepeatCountsIntoAVariable()
     {
         var src = Flat(Prog(Loop(ActionCatalog.RepeatId, new[] { Log("x") }, ArgValue.Const(5), ArgValue.Const("i"))));

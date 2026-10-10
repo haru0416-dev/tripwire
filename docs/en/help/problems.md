@@ -25,6 +25,9 @@ The status at the top of the Inspector counts problems. **Show them** opens only
 | Pick the variable that receives '…'. | In **Call Udon API**, pick a variable of the right type in the **(result)** field |
 | To change part of a …, make the target a variable. | Make a position or color variable and pick it as the target; the changed value goes into it |
 | A trigger's Custom events take no values, so they can't receive this network event… | Put the values in synced variables, then send an event without values |
+| Another variable is saved as '…': each would overwrite the other… | Change **Save name** under the variable to one no other variable uses |
+| A saved variable is each player's own: it can't be synced or temporary. | Pick one of not synced, synced, temporary or saved |
+| Pick the list of players. | With **Who can use it** set to a list, put a player list in **List** (**New** makes one) |
 
 ## "Use Only my screen"
 

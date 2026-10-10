@@ -37,6 +37,8 @@ namespace Tripwire.Core
         UiElement,
         /// <summary>The script a listen event registers with: event Event.</summary>
         ListenTarget,
+        /// <summary>A value typed in the Inspector (<see cref="FieldBinding.Constant"/>), see <see cref="CodeGenerator.ConstantsInFields"/>.</summary>
+        Constant,
     }
 
     /// <summary>A serialized field of the generated behaviour that the editor fills with dragged-in references.</summary>
@@ -48,6 +50,11 @@ namespace Tripwire.Core
         public int Variable = -1;
         /// <summary>A VRCUrl field: the URL text the editor stores into it (instead of object references).</summary>
         public string UrlValue;
+        /// <summary>
+        /// A <see cref="BindingKind.Constant"/> field's value: bool, int, float, string, string[], or float[] for a
+        /// Vector2 / Vector3 / Color / Quaternion (x, y, z, w; a rotation already turned from its Euler angles).
+        /// </summary>
+        public object Constant;
         public string UnityType;
         public bool IsArray;
     }
@@ -72,6 +79,13 @@ namespace Tripwire.Core
         /// check each event's code on its own. Never set by the editor.
         /// </summary>
         public static bool KeepBodiesSeparate;
+
+        /// <summary>
+        /// Values typed in the Inspector (on/off, numbers, text, positions, colors, rotations) go into fields the editor
+        /// fills, not into the code: triggers that differ only in such values share one class, and editing one changes
+        /// no code (no script compile). On in the editor; the Core tests read the code with the values written in.
+        /// </summary>
+        public static bool ConstantsInFields = true;
 
         public const string Namespace = "Tripwire.Generated";
         const string ClassPlaceholder = "__TRIPWIRE_CLASS__";
@@ -147,7 +161,10 @@ namespace Tripwire.Core
                 EmitEntries(specs);
                 for (int i = 0; i < p.Events.Count; i++)
                     if (specs[i] != null) EmitEventBody(i, specs[i]);
+                EmitRestore(); // before the setters: it calls them
                 EmitVariableMethods();
+                EmitHomes();
+                EmitGates();
                 EmitTraceSupport();
                 DropUnreadEventValues();
                 if (!KeepBodiesSeparate)

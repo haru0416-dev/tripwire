@@ -103,6 +103,7 @@ namespace Tripwire.Tests
         {
             var before = Texts.Language;
             Texts.Language = UiLanguage.English;
+            var lists = InspectorEditingTests.PlayerLists();
             try
             {
                 foreach (var starter in TripwireTriggerEditor.Starters)
@@ -116,7 +117,7 @@ namespace Tripwire.Tests
                     Assert.IsTrue(errors.All(m => m.Contains("UI element") || m.Contains("object")), starter.En + ": " + string.Join(" | ", errors));
                 }
             }
-            finally { Texts.Language = before; }
+            finally { Texts.Language = before; InspectorEditingTests.RemovePlayerListsSince(lists); }
         }
 
         [Test]

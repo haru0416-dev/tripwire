@@ -114,28 +114,46 @@ namespace Tripwire.Tests
             Same<KPlayerFilter, Tripwire.Core.PlayerFilter>();
             Same<KCompareOp, Tripwire.Core.CompareOp>();
             Same<KArgSource, Tripwire.Core.ArgSource>();
+            Same<KGate, Tripwire.Core.Gate>();
         }
 
         [Test]
         public void StarterCardsGenerateWithoutErrors()
         {
             // Each starter only lacks the objects the person drags in (warnings, not errors).
-            foreach (var starter in TripwireTriggerEditor.Starters)
+            var listsBefore = PlayerLists();
+            try
             {
-                var go = new GameObject("Starter");
-                try
+                foreach (var starter in TripwireTriggerEditor.Starters)
                 {
-                    var t = go.AddComponent<TripwireTrigger>();
-                    starter.Make(t);
-                    var g = TripwireCompiler.Generate(t);
-                    Assert.IsFalse(g.HasErrors, starter.En + ": " + string.Join("; ", g.Diagnostics));
-                    Assert.IsNotEmpty(t.events, starter.En);
-                }
-                finally
-                {
-                    UnityEngine.Object.DestroyImmediate(go);
+                    var go = new GameObject("Starter");
+                    try
+                    {
+                        var t = go.AddComponent<TripwireTrigger>();
+                        starter.Make(t);
+                        var g = TripwireCompiler.Generate(t);
+                        Assert.IsFalse(g.HasErrors, starter.En + ": " + string.Join("; ", g.Diagnostics));
+                        Assert.IsNotEmpty(t.events, starter.En);
+                    }
+                    finally
+                    {
+                        UnityEngine.Object.DestroyImmediate(go);
+                    }
                 }
             }
+            finally { RemovePlayerListsSince(listsBefore); }
+        }
+
+        /// <summary>The player list assets in the project (the admin button starter makes one).</summary>
+        internal static HashSet<string> PlayerLists() => new HashSet<string>(AssetDatabase.FindAssets("t:TripwirePlayerList"));
+
+        /// <summary>Removes the player lists made since <paramref name="before"/>, and their folder when it is left empty.</summary>
+        internal static void RemovePlayerListsSince(HashSet<string> before)
+        {
+            foreach (var guid in AssetDatabase.FindAssets("t:TripwirePlayerList").Where(g => !before.Contains(g)))
+                AssetDatabase.DeleteAsset(AssetDatabase.GUIDToAssetPath(guid));
+            if (AssetDatabase.IsValidFolder("Assets/Tripwire Player Lists") && AssetDatabase.FindAssets("", new[] { "Assets/Tripwire Player Lists" }).Length == 0)
+                AssetDatabase.DeleteAsset("Assets/Tripwire Player Lists");
         }
 
         [Test]

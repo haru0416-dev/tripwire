@@ -11,6 +11,31 @@ namespace Tripwire.Core
     {
         sealed partial class Generator
         {
+            /// <summary>The kind each constant field was declared with (a field is declared once).</summary>
+            readonly Dictionary<string, ValueKind> constantFields = new Dictionary<string, ValueKind>(StringComparer.Ordinal);
+
+            /// <summary>
+            /// A value typed in the Inspector: a field named after where the value is (so the name doesn't change with it),
+            /// filled by the editor (<see cref="ConstantsInFields"/>); the literal for kinds Udon can't serialize, or
+            /// with the setting off.
+            /// </summary>
+            string ConstantExpr(ValueKind kind, object value, string place)
+            {
+                if (!ConstantsInFields || !FieldKind(kind)) return Literal(kind, value);
+                var field = "tw_C" + place.Replace('-', 'm'); // no action or event (-1, -3) would put '-' in the name
+                if (constantFields.TryGetValue(field, out var declared) && declared != kind) field += "_" + kind;
+                if (!constantFields.ContainsKey(field))
+                {
+                    constantFields[field] = kind;
+                    fields.Append("        public ").Append(TypeName(ParamType.Of(kind))).Append(' ').Append(field).Append(";\n");
+                    Result.Bindings.Add(new FieldBinding { Field = field, Kind = BindingKind.Constant, Constant = ConstantValue(kind, value) });
+                }
+                return field;
+            }
+
+            /// <summary>Where an argument's value is, as part of a field name: event, action, argument (and condition).</summary>
+            static string PlaceOf(int ev, int act, int argIndex, int cErr) => ev + "_" + act + "_" + argIndex + (cErr >= 0 ? "_c" + cErr : "");
+
             /// <summary>
             /// Text with {name} placeholders: each becomes that variable's (or this event's value's) text. {{ and }} are
             /// literal braces.
@@ -20,6 +45,9 @@ namespace Tripwire.Core
                 var parts = new List<string>();
                 var literal = new StringBuilder();
                 var spec = EventCatalog.Get(p.Events[ev].EventId);
+                // The text between the placeholders: constants of their own (the n-th piece of this text).
+                string Piece() { var piece = ConstantExpr(ValueKind.String, literal.ToString(), PlaceOf(ev, act, argIndex, cErr) + "_t" + parts.Count); literal.Clear(); return piece; }
+                bool startsWithText = !(text.Length > 0 && text[0] == '{' && !(text.Length > 1 && text[1] == '{'));
                 for (int i = 0; i < text.Length; i++)
                 {
                     char c = text[i];
@@ -34,6 +62,13 @@ namespace Tripwire.Core
                     ArgValue source;
                     if (vars.ContainsKey(name)) source = ArgValue.Var(name);
                     else if (spec != null && spec.Params.Any(x => x.Name == name)) source = ArgValue.Param(name);
+                    else if (BuiltInText(name) is string builtIn)
+                    {
+                        if (literal.Length > 0) parts.Add(Piece());
+                        parts.Add(builtIn);
+                        i = end;
+                        continue;
+                    }
                     else
                     {
                         Error(Texts.T("{" + name + "}: no variable or event value has that name. Write {{ and }} for braces themselves.",
@@ -42,14 +77,29 @@ namespace Tripwire.Core
                     }
                     var expr = ValueExpr(ParamType.Of(ValueKind.String), source, ev, act, argIndex, cErr);
                     if (expr == null) return null;
-                    if (literal.Length > 0) { parts.Add(StringLiteral(literal.ToString())); literal.Clear(); }
+                    if (literal.Length > 0) parts.Add(Piece());
                     parts.Add(expr);
                     i = end;
                 }
-                if (literal.Length > 0 || parts.Count == 0) parts.Add(StringLiteral(literal.ToString()));
-                // Start from a literal so '+' is string concatenation even when the first part is a converted value.
-                if (!parts[0].StartsWith("\"", StringComparison.Ordinal)) parts.Insert(0, "\"\"");
+                if (literal.Length > 0 || parts.Count == 0) parts.Add(Piece());
+                // Start from text so '+' is string concatenation even when the first part is a converted value.
+                if (!startsWithText) parts.Insert(0, "\"\"");
                 return string.Join(" + ", parts);
+            }
+
+            /// <summary>
+            /// Values any text can show without a variable (a variable or event value of the same name comes first):
+            /// how many are in the instance, the local player's name, the time (HH:mm).
+            /// </summary>
+            static string BuiltInText(string name)
+            {
+                switch (name)
+                {
+                    case "プレイヤー数": case "playerCount": return "VRCPlayerApi.GetPlayerCount().ToString()";
+                    case "自分の名前": case "myName": return "(Utilities.IsValid(Networking.LocalPlayer) ? Networking.LocalPlayer.displayName : \"\")";
+                    case "時刻": case "time": return "System.DateTime.Now.ToString(\"HH:mm\")";
+                    default: return null;
+                }
             }
 
             /// <summary>Expression for a non-object value: constant or variable.</summary>
@@ -98,7 +148,7 @@ namespace Tripwire.Core
                         }
                         if (template && want.Kind == ValueKind.String && !want.IsArray && arg.Constant is string text && text.IndexOfAny(new[] { '{', '}' }) >= 0)
                             return TextTemplate(text, ev, act, argIndex, cErr);
-                        return Literal(want, arg.Constant);
+                        return want.Kind == ValueKind.Enum ? Literal(want, arg.Constant) : ConstantExpr(want.Kind, arg.Constant, PlaceOf(ev, act, argIndex, cErr));
                     case ArgSource.Variable:
                         VariableDecl v;
                         if (arg.Name == null || !vars.TryGetValue(arg.Name, out v)) { Error(MissingVariable(arg.Name), ev, act, argIndex, cond: cErr); return null; }

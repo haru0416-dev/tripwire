@@ -812,5 +812,138 @@ namespace Tripwire.Tests
             var y = Root("T_Mover").transform.position.y;
             check(y < 5f, "T: the tween's handle, kept in a variable, stopped it (y " + y + ")");
         }
+
+        // ---------------- U. Handy actions: toggling a collider, Respawn, a random event, a random item, values in text ----------------
+
+        static void AddHandy()
+        {
+            var t = Trigger(Box("U_Handy", new Vector3(28, 1, 0)), ("picked", "System.Int32", false), ("item", "UnityEngine.GameObject", false));
+            var wall = Box("U_Wall", new Vector3(28, 1, 3));
+            var ball = Box("U_Ball", new Vector3(30, 1, 0));
+            var choices = new[] { Obj("U_A"), Obj("U_B"), Obj("U_C") };
+            var tmp = TripwireModel.ResolveType("TMPro.TextMeshPro");
+            var signObject = new GameObject("U_Sign", tmp);
+            var sign = new KAction { actionId = "Text.SetText", args = { Objs(signObject.GetComponent(tmp)), Str("{プレイヤー数}人 {自分の名前} {時刻}") } };
+            t.events.Add(On("Interact", "",
+                Act("Collider.ToggleEnabled", Objs(wall.GetComponent<Collider>())),
+                Act(ActionCatalog.RespawnId, Objs(ball)),
+                new KAction { actionId = ActionCatalog.SendRandomEventId, args = { new KArg { source = KArgSource.Self }, Str("U_One\nU_Two"), Int(0) } },
+                Act(ActionCatalog.RandomItemId, Str("item"), Objs(choices)),
+                sign));
+            t.events.Add(On("Custom", "U_One", SetVar("picked", Int(1))));
+            t.events.Add(On("Custom", "U_Two", SetVar("picked", Int(2))));
+        }
+
+        static IEnumerator CheckHandy(Action<bool, string> check)
+        {
+            var ub = Root("U_Handy").GetComponent<UdonBehaviour>();
+            yield return Ready(ub);
+            var ball = Root("U_Ball");
+            ball.transform.position = new Vector3(40, 5, 40); // moved during Play
+            ub.Interact();
+            yield return null;
+            check(!Root("U_Wall").GetComponent<Collider>().enabled, "U: the wall's collider was toggled off");
+            check(Vector3.Distance(ball.transform.position, new Vector3(30, 1, 0)) < 0.01f, "U: Respawn put the ball back where it started (" + ball.transform.position + ")");
+            ub.TryGetProgramVariable("v_picked", out int picked);
+            check(picked == 1 || picked == 2, "U: one of the two Custom events ran (" + picked + ")");
+            ub.TryGetProgramVariable("v_item", out GameObject item);
+            check(item != null && item.name.StartsWith("U_") && item.name.Length == 3, "U: a random item of the list went into the variable (" + (item != null ? item.name : "null") + ")");
+            var text = TextOf("U_Sign");
+            check(text.StartsWith(VRCPlayerApi.GetPlayerCount() + "人 ") && text.Contains(":"), "U: the text shows the player count, the name and the time (" + text + ")");
+            ub.Interact();
+            yield return null;
+            check(Root("U_Wall").GetComponent<Collider>().enabled, "U: toggled back on");
+        }
+
+        // ---------------- V. Who can use it: a list, not in a list, the master, the instance's creator ----------------
+
+        static void AddGates()
+        {
+            var list = ScriptableObject.CreateInstance<TripwirePlayerList>();
+            list.names.Add("Nobody Here");
+            Directory.CreateDirectory("Assets/TripwireTests/Temp");
+            AssetDatabase.CreateAsset(list, "Assets/TripwireTests/Temp/Gate List.asset");
+            KEvent Click(KGate gate) => new KEvent { eventId = "Interact", gate = gate, gateList = list, actions = { Act("Variable.Add", Str("runs"), Int(1)) } };
+            Trigger(Box("V_InList", new Vector3(32, 1, 0)), ("runs", "System.Int32", false)).events.Add(Click(KGate.InList));
+            Trigger(Box("V_NotInList", new Vector3(32, 1, 2)), ("runs", "System.Int32", false)).events.Add(Click(KGate.NotInList));
+            Trigger(Box("V_Master", new Vector3(32, 1, 4)), ("runs", "System.Int32", false)).events.Add(Click(KGate.Master));
+            var creator = Trigger(Box("V_Creator", new Vector3(32, 1, 6)), ("runs", "System.Int32", false));
+            creator.events.Add(Click(KGate.InstanceOwner)); // compiles; who created a ClientSim instance isn't checked here
+        }
+
+        static IEnumerator CheckGates(Action<bool, string> check)
+        {
+            var inList = Root("V_InList").GetComponent<UdonBehaviour>();
+            var notInList = Root("V_NotInList").GetComponent<UdonBehaviour>();
+            var master = Root("V_Master").GetComponent<UdonBehaviour>();
+            yield return Ready(inList, notInList, master);
+            inList.Interact(); notInList.Interact(); master.Interact();
+            yield return null;
+            int Runs(UdonBehaviour ub) { ub.TryGetProgramVariable("v_runs", out int n); return n; }
+            check(Runs(inList) == 0, "V: a card for the people in a list didn't run for someone not in it");
+            check(inList.DisableInteractive, "V: and that player can't point at it");
+            check(Runs(notInList) == 1 && !notInList.DisableInteractive, "V: a card for the people not in the list ran");
+            check(Runs(master) == 1, "V: a card for the master ran for the master (the only player)");
+        }
+
+        // ---------------- W. Saved variables: kept in PlayerData, given back when the data is loaded ----------------
+
+        static void AddSaved()
+        {
+            var t = Trigger(Box("W_Saved", new Vector3(34, 1, 0)), ("coins", "System.Int32", false));
+            t.variables[0].saved = true;
+            t.variables[0].saveKey = "tripwire_test_coins";
+            t.events.Add(On("Interact", "", Act("Variable.Add", Str("coins"), Int(1))));
+            // Every kind that can be saved, so each PlayerData Set / TryGet the generator uses compiles.
+            foreach (var (name, type) in new[] { ("flag", "System.Boolean"), ("level", "System.Single"), ("nick", "System.String"), ("spot2", "UnityEngine.Vector2"),
+                                                 ("spot", "UnityEngine.Vector3"), ("tint", "UnityEngine.Color"), ("turn", "UnityEngine.Quaternion") })
+                t.variables.Add(new KVariable { name = name, typeName = type, saved = true, saveKey = "tripwire_test_" + name });
+        }
+
+        static IEnumerator CheckSaved(Action<bool, string> check)
+        {
+            var ub = Root("W_Saved").GetComponent<UdonBehaviour>();
+            yield return Ready(ub);
+            var end = Time.realtimeSinceStartup + 3f;
+            bool restored = false;
+            while (Time.realtimeSinceStartup < end && !(ub.TryGetProgramVariable("tw_Restored", out restored) && restored)) yield return null;
+            check(restored, "W: the player's saved data came back (OnPlayerRestored)");
+            ub.TryGetProgramVariable("v_coins", out int before);
+            ub.Interact();
+            yield return null;
+            ub.TryGetProgramVariable("v_coins", out int after);
+            bool saved = VRC.SDK3.Persistence.PlayerData.TryGetInt(Networking.LocalPlayer, "tripwire_test_coins", out int stored);
+            check(after == before + 1 && saved && stored == after, "W: the change was saved (" + before + " → " + after + ", saved " + (saved ? stored.ToString() : "nothing") + ")");
+        }
+
+        // ---------------- X. Starter cards, as made by one click, with a text dragged in ----------------
+
+        static void AddStarters()
+        {
+            var tmp = TripwireModel.ResolveType("TMPro.TextMeshPro");
+            foreach (var (name, ja, x) in new[] { ("X_Countdown", "10 からカウントダウン", 0), ("X_Headcount", "いる人数を表示する", 2), ("X_Visits", "来た回数を数える（保存）", 4) })
+            {
+                var t = Box(name, new Vector3(36, 1, x)).AddComponent<TripwireTrigger>();
+                TripwireTriggerEditor.Starters.First(s => s.Ja == ja).Make(t);
+                var sign = new GameObject(name + "_Text", tmp).GetComponent(tmp);
+                foreach (var a in t.events.SelectMany(e => e.actions).Where(a => a.actionId == "Text.SetText")) a.args[0] = Objs(sign);
+            }
+        }
+
+        static IEnumerator CheckStarters(Action<bool, string> check)
+        {
+            var countdown = Root("X_Countdown").GetComponent<UdonBehaviour>();
+            var headcount = Root("X_Headcount").GetComponent<UdonBehaviour>();
+            var visits = Root("X_Visits").GetComponent<UdonBehaviour>();
+            yield return Ready(countdown, headcount, visits);
+            string Text(string name) { var c = Root(name + "_Text").GetComponent(TripwireModel.ResolveType("TMPro.TextMeshPro")); return (string)c.GetType().GetProperty("text").GetValue(c); }
+            countdown.Interact();
+            var end = Time.realtimeSinceStartup + 2.5f;
+            while (Time.realtimeSinceStartup < end) yield return null;
+            var shown = Text("X_Countdown");
+            check(shown == "8" || shown == "9", "X: the countdown went down each second (shows " + shown + " after 2.5 s)");
+            check(Text("X_Headcount").StartsWith("1 ") || Text("X_Headcount").StartsWith("1人") , "X: the headcount shows one player (" + Text("X_Headcount") + ")");
+            check(Text("X_Visits").Contains("回目") || Text("X_Visits").StartsWith("Visit"), "X: the visits were counted after the saved value came back (" + Text("X_Visits") + ")");
+        }
     }
 }

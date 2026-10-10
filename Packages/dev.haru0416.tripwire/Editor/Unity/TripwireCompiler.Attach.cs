@@ -111,6 +111,12 @@ namespace Tripwire.Editor
             foreach (var b in g.Bindings)
             {
                 var field = type.GetField(b.Field);
+                if (b.Kind == BindingKind.Constant)
+                {
+                    // A value typed in the Inspector (CodeGenerator.ConstantsInFields): the code no longer holds it.
+                    if (field != null) values.Add((field, ConstantFor(field.FieldType, b.Constant)));
+                    continue;
+                }
                 if (b.UrlValue != null)
                 {
                     // URLs cannot be built at runtime in VRChat; the editor stores them.
@@ -171,6 +177,18 @@ namespace Tripwire.Editor
                 if (t.gameObject.scene.IsValid()) EditorSceneManager.MarkSceneDirty(t.gameObject.scene);
             }
             return failed == null || Fail(t, failed);
+        }
+
+        /// <summary>A constant binding's value as the field's type: float[] becomes the vector, color or rotation.</summary>
+        static object ConstantFor(Type fieldType, object value)
+        {
+            if (!(value is float[] f)) return value;
+            float At(int i) => i < f.Length ? f[i] : 0f;
+            if (fieldType == typeof(Vector2)) return new Vector2(At(0), At(1));
+            if (fieldType == typeof(Vector3)) return new Vector3(At(0), At(1), At(2));
+            if (fieldType == typeof(Color)) return new Color(At(0), At(1), At(2), At(3));
+            if (fieldType == typeof(Quaternion)) return new Quaternion(At(0), At(1), At(2), At(3));
+            return value;
         }
 
         /// <summary>Field values compared as the behaviour stores them (URLs by text, arrays element by element).</summary>

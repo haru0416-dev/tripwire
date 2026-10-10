@@ -87,8 +87,8 @@ namespace Tripwire.Core
                     {
                         // The opposite of the fail test, without double negations where it's easy.
                         var plain = PlainTest.IsMatch(test);
-                        var holds = plain ? (test.StartsWith("!") ? test.Substring(1) : "!" + test)
-                                  : test.StartsWith("!(") && test.EndsWith(")") && Balanced(test.Substring(2, test.Length - 3)) ? test.Substring(2, test.Length - 3)
+                        var holds = plain ? (test.StartsWith("!", StringComparison.Ordinal) ? test.Substring(1) : "!" + test)
+                                  : test.StartsWith("!(", StringComparison.Ordinal) && test.EndsWith(")", StringComparison.Ordinal) && Balanced(test.Substring(2, test.Length - 3)) ? test.Substring(2, test.Length - 3)
                                   : "!(" + test + ")";
                         block = indent + "if (" + holds + ")\n" + indent + "{\n" + inner + indent + "}\n";
                         if (stopped != null) block += indent + "else " + stopped + "\n";
@@ -97,8 +97,9 @@ namespace Tripwire.Core
                     int lineEnd = lineStart + indent.Length + name.Length + "();\n".Length;
                     pieces[caller] = callerText.Remove(lineStart, lineEnd - lineStart).Insert(lineStart, block);
                     pieces.RemoveAt(mi);
-                    // Look again from the start: a body that held this call may now be single-use itself.
-                    mi = -1;
+                    // Carry on at the next piece: inlining moves the calls inside a body but adds or removes no other, so
+                    // the bodies already passed stay as they were (looking again from the start was square in the bodies).
+                    mi--;
                 }
                 methods.Clear().Append(string.Concat(pieces));
             }
@@ -185,7 +186,7 @@ namespace Tripwire.Core
                     {
                         var local = "tw_Self" + n++;
                         updated = System.Text.RegularExpressions.Regex.Replace(updated, literal + @"|(?<![\w.])GetComponent<" + System.Text.RegularExpressions.Regex.Escape(type) + @">\(\)",
-                            m => m.Value.StartsWith("\"") ? m.Value : local);
+                            m => m.Value.StartsWith("\"", StringComparison.Ordinal) ? m.Value : local);
                         decls += "            " + type + " " + local + " = GetComponent<" + type + ">();\n";
                     }
                     updated = updated.Insert(open, decls);

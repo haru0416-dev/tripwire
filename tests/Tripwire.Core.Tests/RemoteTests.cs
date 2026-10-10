@@ -30,6 +30,15 @@ public class RemoteTests
     }
 
     [Fact]
+    public void AnInputMissingFromTheSavedDataIsReportedNotThrown()
+    {
+        // The editor passes null for an input the saved action doesn't have (found by PropertyTests).
+        var a = Remote(ActionCatalog.SetRemoteId, ParamType.Of(ValueKind.Int), ArgValue.Const(7));
+        a.Args[0] = null;
+        Assert.Contains(CodeGenerator.Generate(Caller(a)).Diagnostics, d => d.Severity == Severity.Error && d.Action == 0 && d.Arg == 0 && d.Message.Contains("入っていません"));
+    }
+
+    [Fact]
     public void ReadingTakesTheField()
     {
         var src = Flat(Caller(Remote(ActionCatalog.GetRemoteId, ParamType.Of(ValueKind.Int), ArgValue.Const("mine"))));

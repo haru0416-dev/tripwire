@@ -23,8 +23,11 @@ namespace Tripwire.Core
         public bool Optional;
         /// <summary>Text shown to people: {name} in the constant inserts a variable or the event's value.</summary>
         public bool Template;
+        /// <summary>Text entered on several lines (a template's text, a list of names).</summary>
+        public bool Multiline;
 
-        public ActionParam AsTemplate() { Template = true; return this; }
+        public ActionParam AsTemplate() { Template = true; Multiline = true; return this; }
+        public ActionParam AsLines() { Multiline = true; return this; }
 
         public ActionParam(string name, ParamType type, object defaultValue = null)
         {
@@ -61,6 +64,12 @@ namespace Tripwire.Core
         RandomVariable,
         /// <summary>A component of an object (or its children / parents) into an object variable of that component's type.</summary>
         GetComponent,
+        /// <summary>Objects back where they were at Start (VRC Object Sync: its Respawn, for everyone); held pickups dropped.</summary>
+        Respawn,
+        /// <summary>One of several Custom events, picked at random once, sent to the targets.</summary>
+        SendRandomEvent,
+        /// <summary>One object of a list, picked at random, into an object variable.</summary>
+        RandomItem,
         /// <summary>A and B combined by + - × ÷ or remainder, into a variable (numbers, vectors, colors; text joins with +).</summary>
         Calculate,
         StartTimer,
@@ -107,9 +116,10 @@ namespace Tripwire.Core
         /// <summary>Has an Else list (If).</summary>
         public bool HasElse => Special == ActionSpecial.If;
         public bool IsLoop => Special == ActionSpecial.Repeat || Special == ActionSpecial.ForEach || Special == ActionSpecial.While;
-        /// <summary>The action writes the variable named by its first argument (Set, Toggle, Add, Random, Calculate, Get Component).</summary>
+        /// <summary>The action writes the variable named by its first argument (Set, Toggle, Add, Random, Calculate, Get Component, Random Item).</summary>
         public bool WritesVariable => Special == ActionSpecial.SetVariable || Special == ActionSpecial.ToggleVariable || Special == ActionSpecial.AddVariable
-                                      || Special == ActionSpecial.RandomVariable || Special == ActionSpecial.Calculate || Special == ActionSpecial.GetComponent;
+                                      || Special == ActionSpecial.RandomVariable || Special == ActionSpecial.Calculate || Special == ActionSpecial.GetComponent
+                                      || Special == ActionSpecial.RandomItem;
         /// <summary>
         /// It (nearly) always writes a new value, so a change event it sets off runs again (Toggle, Add, Random, Calculate).
         /// Set and Get Component can put back the same value, which the setter ignores, ending the chain.
@@ -139,6 +149,9 @@ namespace Tripwire.Core
         public const string RandomVariableId = "Variable.Random";
         public const string CalculateId = "Variable.Calculate";
         public const string GetComponentId = "Variable.GetComponent";
+        public const string RandomItemId = "Variable.RandomItem";
+        public const string RespawnId = "Transform.Respawn";
+        public const string SendRandomEventId = "Event.SendRandom";
         /// <summary>Calculate's operators, in the order of its choice index.</summary>
         public enum CalcOp { Add, Subtract, Multiply, Divide, Remainder }
         public const string LogId = "Debug.Log";
@@ -238,6 +251,12 @@ namespace Tripwire.Core
                 "{targets}.enabled = {enabled};", "targets", Targets("UnityEngine.Collider"), Bool("enabled", true));
             Add("Renderer.SetEnabled", "Component", "Set Renderer Enabled", "Show or hide renderers without disabling the object.",
                 "{targets}.enabled = {enabled};", "targets", Targets("UnityEngine.Renderer"), Bool("enabled", true));
+            Add("Behaviour.ToggleEnabled", "Component", "Toggle Component Enabled", "Flip components (Light, AudioSource, ...) between enabled and disabled.",
+                "{targets}.enabled = !{targets}.enabled;", "targets", Targets("UnityEngine.Behaviour"));
+            Add("Collider.ToggleEnabled", "Component", "Toggle Collider Enabled", "Flip colliders between enabled and disabled.",
+                "{targets}.enabled = !{targets}.enabled;", "targets", Targets("UnityEngine.Collider"));
+            Add("Renderer.ToggleEnabled", "Component", "Toggle Renderer Enabled", "Flip renderers between shown and hidden, keeping the object.",
+                "{targets}.enabled = !{targets}.enabled;", "targets", Targets("UnityEngine.Renderer"));
 
             // Transform
             Add("Transform.SetPosition", "Transform", "Set Position", "Move objects to a world position (local only, not synced).",
@@ -294,6 +313,15 @@ namespace Tripwire.Core
                 Targets(ParamType.Behaviour), Str("event", ""),
                 Choice("broadcast", 0, new[] { "Local", "All", "Owner" },
                     new[] { "SendCustomEvent(", "SendCustomNetworkEvent(NetworkEventTarget.All, ", "SendCustomNetworkEvent(NetworkEventTarget.Owner, " }));
+            byId[SendRandomEventId] = new ActionSpec { Id = SendRandomEventId, Category = "Event", DisplayName = "Send Random Event", Special = ActionSpecial.SendRandomEvent,
+                Description = "Run one of several Custom events, picked at random (the same one on every target).", EachParam = "targets",
+                Params = new[] { Targets(ParamType.Behaviour), Str("events", "").AsLines(), Choice("broadcast", 0, new[] { "Local", "All", "Owner" },
+                    new[] { "SendCustomEvent(", "SendCustomNetworkEvent(NetworkEventTarget.All, ", "SendCustomNetworkEvent(NetworkEventTarget.Owner, " }) } };
+            all.Add(byId[SendRandomEventId]);
+            byId[RespawnId] = new ActionSpec { Id = RespawnId, Category = "Transform", DisplayName = "Respawn", Special = ActionSpecial.Respawn,
+                Description = "Put objects back where they were when the world started (with VRC Object Sync: for everyone). A held pickup is dropped first.",
+                EachParam = "targets", Params = new[] { Targets(GO) } };
+            all.Add(byId[RespawnId]);
             Add(SendEventDelayedId, "Event", "Send Event Delayed", "Run a Custom event locally after some seconds.",
                 "{targets}.SendCustomEventDelayedSeconds({event}, {seconds});", "targets",
                 Targets(ParamType.Behaviour), Str("event", ""), Float("seconds", 1f));
@@ -308,6 +336,8 @@ namespace Tripwire.Core
                 ActionSpecial.RandomVariable, VarRef(), new ActionParam("min", null), new ActionParam("max", null));
             byId[GetComponentId] = Special(GetComponentId, "Get Component", "Put a component of an object, or of its children or parents, into an object variable: the variable's type says which component.",
                 ActionSpecial.GetComponent, VarRef(), new ActionParam("source", ParamType.Object(GO)), new ActionParam("where", ParamType.Of(ValueKind.Int), 0) { Choices = new[] { "This object", "Children too", "Parents too" } });
+            byId[RandomItemId] = Special(RandomItemId, "Random Item", "Put one object of a list, picked at random, into an object variable.",
+                ActionSpecial.RandomItem, VarRef(), new ActionParam("list", ParamType.Objects(GO)));
             byId[CalculateId] = Special(CalculateId, "Calculate", "Put A + - × ÷ B into a variable: numbers, positions (Vector2/3) and colors; text joins with +.",
                 ActionSpecial.Calculate, VarRef(), new ActionParam("a", null), new ActionParam("operator", ParamType.Of(ValueKind.Int), 0) { Choices = new[] { "+", "−", "×", "÷", "%" } }, new ActionParam("b", null));
             byId[RepeatId] = Special(RepeatId, "Repeat", "Run some actions a number of times.", ActionSpecial.Repeat,
@@ -348,15 +378,16 @@ namespace Tripwire.Core
             Add(LogId, "Debug", "Log", "Write a message to the log.",
                 "Debug.Log({message});", null, Str("message", "").AsTemplate());
 
-            Layout("Show", "GameObject.SetActive", "GameObject.ToggleActive", "Collider.SetEnabled", "Renderer.SetEnabled", "Behaviour.SetEnabled");
-            Layout("Move", "Transform.SetPosition", "Transform.MoveTo", "Animator.SetTrigger", "Animator.SetBool", "Animator.SetInteger", "Animator.SetFloat", "Animator.Play");
+            Layout("Show", "GameObject.SetActive", "GameObject.ToggleActive", "Collider.SetEnabled", "Collider.ToggleEnabled", "Renderer.SetEnabled", "Renderer.ToggleEnabled",
+                "Behaviour.SetEnabled", "Behaviour.ToggleEnabled");
+            Layout("Move", "Transform.SetPosition", "Transform.MoveTo", RespawnId, "Animator.SetTrigger", "Animator.SetBool", "Animator.SetInteger", "Animator.SetFloat", "Animator.Play");
             Layout("SoundFx", "AudioSource.Play", "AudioSource.Stop", "AudioSource.PlayOneShot", "ParticleSystem.Play", "ParticleSystem.Stop");
             Layout("Text", "Text.SetText");
             Layout("Player", "Player.Teleport", "Player.SetSpeed");
             Layout("Pickup", "Pickup.Drop", "Networking.TakeOwnership");
             foreach (var id in new[] { RepeatId, ForEachId, WhileId, BreakId, ContinueId, StopId, TimerStartId, TimerStopId }) byId[id].Category = "Flow";
             Layout("Flow", IfId, RepeatId, ForEachId, WhileId, BreakId, ContinueId, StopId, TimerStartId, TimerStopId);
-            Layout("Variable", SetVariableId, ToggleVariableId, AddVariableId, RandomVariableId, CalculateId, GetComponentId);
+            Layout("Variable", SetVariableId, ToggleVariableId, AddVariableId, RandomVariableId, CalculateId, RandomItemId, GetComponentId);
             Layout("Video", "Video.PlayUrl", "Video.LoadUrl", "Video.Play", "Video.Pause", "Video.Stop", "Video.SetTime", "Video.SetLoop");
             // Another trigger's variables (with Send Event, this passes values to its Custom events).
             var trigger = new ActionParam("trigger", ParamType.Object(ParamType.Behaviour)) { };
@@ -367,7 +398,7 @@ namespace Tripwire.Core
             byId[GetRemoteId] = Special(GetRemoteId, "Read Another Trigger's Variable", "Read a variable of another trigger into one of this trigger's variables.",
                 ActionSpecial.GetRemoteVariable, trigger, remote, VarRef("into", VariableRole.Target));
             byId[SetRemoteId].Category = byId[GetRemoteId].Category = "Link";
-            Layout("Link", ScriptCallId, SendEventId, SendEventDelayedId, SetRemoteId, GetRemoteId);
+            Layout("Link", ScriptCallId, SendEventId, SendEventDelayedId, SendRandomEventId, SetRemoteId, GetRemoteId);
             Layout("Advanced", CallId, LogId);
         }
 

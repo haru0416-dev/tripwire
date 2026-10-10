@@ -19,11 +19,12 @@ namespace Tripwire.Editor
         /// <summary>Upgrades older data in place (recorded for undo). True when something changed.</summary>
         public static bool Upgrade(TripwireTrigger t)
         {
-            // Version 0 is the format of version 1, so nothing is rewritten (opening a scene doesn't make it unsaved);
-            // the number is recorded with the next edit (MarkCurrent).
-            if (t == null || t.dataVersion >= TripwireTrigger.CurrentDataVersion || t.dataVersion <= 0 && TripwireTrigger.CurrentDataVersion == 1) return false;
+            // Versions 0 and 1 are version 2 without its new settings (which start empty), so nothing is rewritten
+            // (opening a scene doesn't make it unsaved); the number is recorded with the next edit (MarkCurrent).
+            // An older Tripwire refuses version 2, which would drop those settings (IsNewer).
+            if (t == null || t.dataVersion >= TripwireTrigger.CurrentDataVersion || TripwireTrigger.CurrentDataVersion == 2) return false;
             Undo.RecordObject(t, "Upgrade Tripwire Trigger");
-            // Steps for later formats go here, oldest first: if (t.dataVersion < 2) { ...; }
+            // Steps for later formats go here, oldest first: if (t.dataVersion < 3) { ...; }
             t.dataVersion = TripwireTrigger.CurrentDataVersion;
             EditorUtility.SetDirty(t);
             return true;

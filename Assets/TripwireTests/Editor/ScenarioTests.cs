@@ -69,7 +69,7 @@ namespace Tripwire.Tests
 
         static GameObject Box(string name, Vector3 pos) { var g = GameObject.CreatePrimitive(PrimitiveType.Cube); g.name = name; g.transform.position = pos; return g; }
 
-        static void BuildScene()
+        internal static void BuildScene()
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
             AddScenarios();
@@ -87,6 +87,10 @@ namespace Tripwire.Tests
             AddRemote();
             AddDebugTools();
             AddWiderApi();
+            AddHandy();
+            AddGates();
+            AddSaved();
+            AddStarters();
             Directory.CreateDirectory(SceneDir);
             EditorSceneManager.SaveScene(scene, ScenePath);
         }
@@ -305,7 +309,7 @@ namespace Tripwire.Tests
             }
 
             // F–J. Single features.
-            foreach (var part in new Func<Action<bool, string>, IEnumerator>[] { CheckInteractAndCalls, CheckScriptCall, CheckUiEvents, CheckVideo, CheckListen, CheckBranches, CheckTimers, CheckLoops, CheckMoreEvents, CheckCyanGuides, CheckMoreFlow, CheckRemote, CheckDebugTools, CheckWiderApi })
+            foreach (var part in new Func<Action<bool, string>, IEnumerator>[] { CheckInteractAndCalls, CheckScriptCall, CheckUiEvents, CheckVideo, CheckListen, CheckBranches, CheckTimers, CheckLoops, CheckMoreEvents, CheckCyanGuides, CheckMoreFlow, CheckRemote, CheckDebugTools, CheckWiderApi, CheckHandy, CheckGates, CheckSaved, CheckStarters })
             {
                 var steps = Flatten(part(Check));
                 while (steps.MoveNext()) yield return steps.Current;

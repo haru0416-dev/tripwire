@@ -23,7 +23,7 @@ namespace Tripwire.Tests
         const string Broken = Dir + "/TwBrokenScript.cs";
         const string StageKey = "TripwireTest.Trust.Stage";
 
-        /// <summary>A value no earlier run used: its program shape has no script yet (the generated folder outlives runs).</summary>
+        /// <summary>A number no earlier run used (for an event name): its program shape has no script yet (the generated folder outlives runs).</summary>
         static int FreshValue(string key)
         {
             int v = SessionState.GetInt(key, 0);
@@ -37,9 +37,11 @@ namespace Tripwire.Tests
             var t = new GameObject("Trusted").AddComponent<TripwireTrigger>();
             t.variables.Add(new KVariable { name = "n", typeName = "System.Int32" });
             var e = new KEvent { eventId = "Interact" };
-            // A value no other test uses: a program shape whose script doesn't exist yet.
-            e.actions.Add(new KAction { actionId = ActionCatalog.SetVariableId, args = { new KArg { stringValue = "n" }, new KArg { intValue = value } } });
+            e.actions.Add(new KAction { actionId = ActionCatalog.SetVariableId, args = { new KArg { stringValue = "n" }, new KArg { intValue = 1 } } });
             t.events.Add(e);
+            // A name no other test uses: a program shape whose script doesn't exist yet (a value alone would only be
+            // filled into the existing class's field).
+            t.events.Add(new KEvent { eventId = "Custom", name = "Fresh" + value, actions = { new KAction { actionId = ActionCatalog.LogId, args = { new KArg { stringValue = "x" } } } } });
             return t;
         }
 

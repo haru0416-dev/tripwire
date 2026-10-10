@@ -79,7 +79,7 @@ namespace Tripwire.Editor
                 WholeArrayParam(label, type, arg);
                 return;
             }
-            DrawTypedParam(label, eventSpec, type, arg, prm.Template);
+            DrawTypedParam(label, eventSpec, type, arg, prm.Template, prm.Multiline);
         }
 
         /// <summary>Setting an array variable: dragged objects (object arrays) or another array variable, never one element.</summary>
@@ -112,7 +112,7 @@ namespace Tripwire.Editor
             if (arg.source == KArgSource.Objects) ObjectList(null, type, arg);
         }
 
-        void DrawTypedParam(string label, EventSpec eventSpec, ParamType type, KArg arg, bool template = false)
+        void DrawTypedParam(string label, EventSpec eventSpec, ParamType type, KArg arg, bool template = false, bool multiline = false)
         {
             switch (type.Kind)
             {
@@ -128,7 +128,7 @@ namespace Tripwire.Editor
                         EditorGUILayout.PrefixLabel(label);
                         int indent = EditorGUI.indentLevel;
                         EditorGUI.indentLevel = 0;
-                        ValueSourceField(type, arg, eventSpec, template);
+                        ValueSourceField(type, arg, eventSpec, template, multiline);
                         EditorGUI.indentLevel = indent;
                     }
                     break;
@@ -139,7 +139,7 @@ namespace Tripwire.Editor
         /// A constant field, with a switch to a fitting variable or the event's own value (a toggle's on/off,
         /// a slider's position) when those exist.
         /// </summary>
-        void ValueSourceField(ParamType type, KArg arg, EventSpec eventSpec = null, bool template = false)
+        void ValueSourceField(ParamType type, KArg arg, EventSpec eventSpec = null, bool template = false, bool multiline = false)
         {
             var sources = new List<KArgSource>();
             var labels = new List<string>();
@@ -173,11 +173,13 @@ namespace Tripwire.Editor
                 arg.name = VariablePopupInline(arg.name, v => Assignable(type, v));
             else if (arg.source == KArgSource.Constant)
             {
-                ConstantField(type, arg);
-                // Placeholder: how to put a value into a text shown to people.
+                // Text shown to people, or a list of names: on several lines.
+                if (multiline && IsText(type)) arg.stringValue = EditorGUILayout.TextArea(arg.stringValue ?? "", MultilineText, GUILayout.MinHeight(EditorGUIUtility.singleLineHeight));
+                else ConstantField(type, arg);
+                // Placeholder: how to put a value into a text shown to people (a variable's, else one any text has).
                 var example = !template || !IsText(type) || !string.IsNullOrEmpty(arg.stringValue) ? null
                     : t.variables.Select(v => v.name).Concat(eventSpec != null ? eventSpec.Params.Select(x => x.Name) : Enumerable.Empty<string>())
-                        .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n) && n.IndexOfAny(new[] { '{', '}' }) < 0);
+                        .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n) && n.IndexOfAny(new[] { '{', '}' }) < 0) ?? T("playerCount", "プレイヤー数");
                 if (example != null)
                 {
                     var r = GUILayoutUtility.GetLastRect();
@@ -185,6 +187,9 @@ namespace Tripwire.Editor
                 }
             }
         }
+
+        static GUIStyle multilineText;
+        static GUIStyle MultilineText => multilineText ??= new GUIStyle(EditorStyles.textArea) { wordWrap = true };
 
         bool Assignable(ParamType want, KVariable v)
         {

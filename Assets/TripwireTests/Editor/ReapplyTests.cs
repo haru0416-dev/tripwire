@@ -28,7 +28,8 @@ namespace Tripwire.Tests
         const string StageKey = "TripwireTest.Reapply.Stage";
         const string IdKey = "TripwireTest.Reapply.Id";
 
-        static void SetValue(TripwireTrigger t, int value) => t.events[0].actions[0].args[1].intValue = value;
+        /// <summary>Another program (one more action): a value alone would only be filled into the same class's field.</summary>
+        static void Grow(TripwireTrigger t) => t.events[0].actions.Add(new KAction { actionId = "Variable.Set", args = { new KArg { stringValue = "n" }, new KArg { intValue = 2 } } });
 
         static void BuildScene()
         {
@@ -86,14 +87,15 @@ namespace Tripwire.Tests
                 var sleeper = Root("Sleeper").GetComponent<TripwireTrigger>();
                 UdonSharpEditor.UdonSharpEditorUtility.GetProxyBehaviour(sleeper.generated).enabled = false;
                 sleeper.generated.enabled = false;
-                SetValue(sleeper, 6);
+                Grow(sleeper);
                 var copy = Root("Copy").GetComponent<TripwireTrigger>();
                 SessionState.SetInt(IdKey + ".Copy", copy.generated.GetInstanceID());
                 UnityEditorInternal.ComponentUtility.CopyComponent(t);
                 UnityEditorInternal.ComponentUtility.PasteComponentValues(copy);
                 Assert.AreSame(ub, copy.generated, "pasting carries the link to Counter's behaviour (the case being tested)");
 
-                SetValue(t, 2); // different program → different class
+                Grow(t); // different program → different class
+                Grow(copy); // the pasted trigger too, so no trigger keeps the old class (the cleanup below removes it)
                 Assert.AreNotEqual(firstClass, TripwireCompiler.Generate(t).ClassName);
                 Assert.AreEqual(TripwireCompiler.State.NeedsScripts, TripwireCompiler.ApplyAll(TripwireCompiler.SceneTriggers()));
                 SessionState.SetInt(StageKey, 1);
@@ -126,6 +128,13 @@ namespace Tripwire.Tests
                 Assert.AreEqual(SessionState.GetInt(IdKey + ".Copy", 0), copyUbs[0].GetInstanceID());
                 Assert.AreSame(copyUbs[0], copy.generated);
                 Assert.AreEqual(1, Root("Counter").GetComponents<UdonBehaviour>().Length, "Counter's behaviour left alone");
+
+                // A value changed without an apply (a script, the Debug Inspector): the same class, so only the values
+                // show it is not applied; applying fills it in without a script compile.
+                t.events[0].actions[0].args[1].intValue = 9;
+                Assert.AreEqual(TripwireCompiler.State.NeedsApply, TripwireCompiler.GetState(t, TripwireCompiler.Generate(t)), "a value not filled in yet");
+                Assert.AreEqual(TripwireCompiler.State.UpToDate, TripwireCompiler.ApplyAll(new[] { t }));
+                Assert.AreEqual(TripwireCompiler.State.UpToDate, TripwireCompiler.GetState(t, TripwireCompiler.Generate(t)));
 
                 // Applying again with nothing changed leaves the scene saved.
                 EditorSceneManager.SaveScene(SceneManager.GetActiveScene());

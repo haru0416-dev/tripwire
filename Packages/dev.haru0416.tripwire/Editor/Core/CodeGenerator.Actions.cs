@@ -169,6 +169,10 @@ namespace Tripwire.Core
                 Texts.T("This action's inputs don't match this version of Tripwire (saved by another version?). Pick the action again to rebuild them.",
                         "このアクションの入力欄が、この版の Tripwire と合いません（ほかの版で保存されたのかもしれません）。アクションを選び直すと、入力欄が作り直されます。");
 
+            /// <summary>An input the action has no value for (missing from the saved data).</summary>
+            void ReportMissing(ActionParam prm, int ev, int act, int k) =>
+                Error(Texts.T("Missing argument '" + prm.Name + "'.", "「" + Texts.Param(prm.Name) + "」が入っていません。"), ev, act, k);
+
             void EmitAction(int ev, EventSpec spec, int act, ActionCall call, StringBuilder body)
             {
                 var a = ActionCatalog.Get(call.ActionId);
@@ -176,6 +180,15 @@ namespace Tripwire.Core
                 if (a.Special == ActionSpecial.If) { EmitIf(ev, spec, act, call, body); return; }
                 if (a.Special == ActionSpecial.Call) { EmitCall(ev, spec, act, call, body); return; }
                 if (call.Args.Count != a.Params.Length) { Error(ArgCountMismatch(), ev, act); return; }
+                // An input missing from the saved data: templates report each below, the special actions stop here
+                // (an optional one, like a loop's counter, is just not used).
+                if (a.Special != ActionSpecial.None)
+                {
+                    bool missing = false;
+                    for (int k = 0; k < a.Params.Length; k++)
+                        if (call.Args[k] == null && !a.Params[k].Optional) { ReportMissing(a.Params[k], ev, act, k); missing = true; }
+                    if (missing) return;
+                }
                 if (call.ActionId == ActionCatalog.SendEventId || call.ActionId == ActionCatalog.SendEventDelayedId)
                     if (!CheckEventName(ev, act, call)) return;
 
@@ -216,6 +229,15 @@ namespace Tripwire.Core
                     case ActionSpecial.GetComponent:
                         EmitGetComponent(ev, spec, act, call, body);
                         return;
+                    case ActionSpecial.RandomItem:
+                        EmitRandomItem(ev, spec, act, call, body);
+                        return;
+                    case ActionSpecial.SendRandomEvent:
+                        EmitSendRandomEvent(ev, spec, act, a, call, body);
+                        return;
+                    case ActionSpecial.Respawn:
+                        EmitRespawn(ev, spec, act, a, call, body);
+                        return;
                     default:
                         // A new kind of action needs its own case here (rather than falling into another kind's code).
                         Error(Texts.T("This version of Tripwire can't make this action yet (a Tripwire bug: please report it). Another action can be applied.", "この版の Tripwire は、このアクションをまだ作れません（Tripwire の不具合なので報告してください）。別のアクションにすれば反映できます。"), ev, act);
@@ -232,7 +254,7 @@ namespace Tripwire.Core
                 {
                     var prm = a.Params[k];
                     var arg = call.Args[k];
-                    if (arg == null) { Error(Texts.T("Missing argument '" + prm.Name + "'.", "「" + Texts.Param(prm.Name) + "」が入っていません。"), ev, act, k); ok = false; continue; }
+                    if (arg == null) { ReportMissing(prm, ev, act, k); ok = false; continue; }
 
                     if (prm.Choices != null)
                     {
@@ -312,12 +334,102 @@ namespace Tripwire.Core
                 var name = (call.Args[1].Constant as string ?? "").Trim();
                 if (name.Length == 0) { Error(Texts.T("Enter the name of the event to run.", "呼ぶイベントの名前を入れてください。"), ev, act, 1); return false; }
                 bool network = call.ActionId == ActionCatalog.SendEventId && call.Args.Count > 2 && call.Args[2]?.Constant is int b && (Broadcast)b != Broadcast.Local;
-                if (network && name.StartsWith("_"))
+                if (network && name.StartsWith("_", StringComparison.Ordinal))
                     Warn(Texts.T("VRChat refuses network events whose name starts with '_', so sending '" + name + "' this way does nothing. Rename it, or send it to Only my screen (Local).",
                                  "名前が _ で始まるイベントは、ネットワーク越しには呼べないので、この送り方では「" + name + "」は動きません。名前を変えるか、「自分だけ（Local）」で送ってください。"), ev, act, 1);
                 if (call.Args[0]?.Source == ArgSource.Self && !p.Events.Any(e => e.EventId == EventCatalog.CustomId && e.Name == name))
                     Warn(Texts.T("This trigger has no Custom event named '" + name + "'.", "このトリガーに「" + name + "」というカスタムイベントはありません。"), ev, act, 1);
                 return true;
+            }
+
+            /// <summary>
+            /// Send Random Event: the names (one per line, or separated by commas) in an array, one picked once with
+            /// UnityEngine.Random, then sent like Send Event: every target gets the same event.
+            /// </summary>
+            void EmitSendRandomEvent(int ev, EventSpec spec, int act, ActionSpec a, ActionCall call, StringBuilder body)
+            {
+                var text = call.Args.Count > 1 && call.Args[1]?.Source == ArgSource.Constant ? call.Args[1].Constant as string : null;
+                var names = RandomEventNames(text);
+                if (names.Count == 0) { Error(Texts.T("Enter the names of the events, one per line.", "呼ぶイベントの名前を、1 行に 1 つずつ入れてください。"), ev, act, 1); return; }
+                int how = call.Args.Count > 2 && call.Args[2]?.Constant is int b ? b : -1;
+                var send = a.Params[2].ChoiceCode;
+                if (how < 0 || how >= send.Length) { Error(Texts.T("Pick who runs it.", "誰の画面で動かすかを選んでください。"), ev, act, 2); return; }
+                foreach (var name in names)
+                {
+                    if (how != 0 && name.StartsWith("_", StringComparison.Ordinal))
+                        Warn(Texts.T("VRChat refuses network events whose name starts with '_', so '" + name + "' won't run this way.", "名前が _ で始まるイベントは、ネットワーク越しには呼べないので、「" + name + "」は動きません。"), ev, act, 1);
+                    if (call.Args[0]?.Source == ArgSource.Self && !p.Events.Any(e => e.EventId == EventCatalog.CustomId && e.Name == name))
+                        Warn(Texts.T("This trigger has no Custom event named '" + name + "'.", "このトリガーに「" + name + "」というカスタムイベントはありません。"), ev, act, 1);
+                }
+                var target = ObjectOperand(spec, a.Params[0].Type, call.Args[0], ev, act, 0, "targets", scalarIfSingle: true);
+                if (target == null) return;
+                var pick = "tw_Pick" + act;
+                body.Append("            string ").Append(pick).Append(" = new string[] { ").Append(string.Join(", ", names.Select(StringLiteral)))
+                    .Append(" }[UnityEngine.Random.Range(0, ").Append(names.Count).Append(")];\n");
+                if (target.ArrayField != null)
+                    EmitStatement(body, target.ArrayField, TypeName(a.Params[0].Type.Element()), new List<string>(), "tw_T." + send[how] + pick + ");", target.ArrayMayBeNull);
+                else
+                    EmitStatement(body, null, null, target.Guards, (IsPlainName(target.Expr) ? target.Expr : "(" + target.Expr + ")") + "." + send[how] + pick + ");");
+            }
+
+            /// <summary>Objects of Respawn actions (their bound fields): where they are at Start is kept for them.</summary>
+            readonly List<string> homeFields = new List<string>();
+
+            /// <summary>Whether any Respawn action needs the positions taken at Start (checked before the bodies are written).</summary>
+            bool RemembersHomes() => p.Events.Any(e => ActionCall.Flatten(e.Actions).Any(x => x?.ActionId == ActionCatalog.RespawnId));
+
+            /// <summary>
+            /// Respawn: each object back where it was at Start. With VRC Object Sync, its own Respawn (after taking
+            /// ownership, so everyone sees it); otherwise the remembered position and rotation, its Rigidbody stopped.
+            /// A pickup the local player holds is dropped first. Only objects placed in the Inspector have a start.
+            /// </summary>
+            void EmitRespawn(int ev, EventSpec spec, int act, ActionSpec a, ActionCall call, StringBuilder body)
+            {
+                var arg = call.Args.Count > 0 ? call.Args[0] : null;
+                if (arg == null || arg.Source != ArgSource.Objects)
+                {
+                    Error(Texts.T("Drag in the objects to put back (their start is taken from the objects placed here).", "戻すオブジェクトを、ドラッグで入れてください（ここに入れた物の、始まったときの位置を覚えておきます）。"), ev, act, 0);
+                    return;
+                }
+                var op = ObjectOperand(spec, a.Params[0].Type, arg, ev, act, 0, "targets");
+                if (op?.ArrayField == null) return;
+                if (p.Events[ev].Broadcast != Broadcast.Local)
+                    Warn(Texts.T("Run on everyone's screen, objects with VRC Object Sync get their ownership fought over. Use Only my screen (Local): Object Sync shows the result to everyone.",
+                                 "全員の画面で動かすと、VRC Object Sync の付いた物はオーナーの取り合いになります。「自分だけ（Local）」にしてください（結果は Object Sync が全員に届けます）。"), ev, act);
+                var f = op.ArrayField;
+                homeFields.Add(f);
+                const string i = "            ";
+                body.Append(i).Append("for (int tw_I = 0, tw_N = ").Append(f).Append(" == null ? 0 : ").Append(f).Append(".Length; tw_I < tw_N; tw_I++)\n").Append(i).Append("{\n");
+                body.Append(i).Append("    UnityEngine.GameObject tw_T = ").Append(f).Append("[tw_I];\n");
+                body.Append(i).Append("    if (!Utilities.IsValid(tw_T)) continue;\n");
+                body.Append(i).Append("    VRC.SDK3.Components.VRCPickup tw_Pk = tw_T.GetComponent<VRC.SDK3.Components.VRCPickup>();\n");
+                body.Append(i).Append("    if (Utilities.IsValid(tw_Pk) && tw_Pk.IsHeld && Utilities.IsValid(tw_Pk.currentPlayer) && tw_Pk.currentPlayer.isLocal) tw_Pk.Drop();\n");
+                body.Append(i).Append("    VRC.SDK3.Components.VRCObjectSync tw_Os = tw_T.GetComponent<VRC.SDK3.Components.VRCObjectSync>();\n");
+                body.Append(i).Append("    if (Utilities.IsValid(tw_Os)) { Networking.SetOwner(Networking.LocalPlayer, tw_T); tw_Os.Respawn(); continue; }\n");
+                body.Append(i).Append("    if (tw_HomeP_").Append(f).Append(" == null || tw_I >= tw_HomeP_").Append(f).Append(".Length) continue;\n");
+                body.Append(i).Append("    tw_T.transform.SetPositionAndRotation(tw_HomeP_").Append(f).Append("[tw_I], tw_HomeR_").Append(f).Append("[tw_I]);\n");
+                body.Append(i).Append("    UnityEngine.Rigidbody tw_Rb = tw_T.GetComponent<UnityEngine.Rigidbody>();\n");
+                body.Append(i).Append("    if (Utilities.IsValid(tw_Rb)) { tw_Rb.velocity = Vector3.zero; tw_Rb.angularVelocity = Vector3.zero; }\n");
+                body.Append(i).Append("}\n");
+            }
+
+            /// <summary>The positions Respawn goes back to, taken at Start.</summary>
+            void EmitHomes()
+            {
+                if (!RemembersHomes()) return;
+                methods.Append("        void Tw_RememberHomes()\n        {\n");
+                foreach (var f in homeFields.Distinct())
+                {
+                    fields.Append("        Vector3[] tw_HomeP_").Append(f).Append(";\n        Quaternion[] tw_HomeR_").Append(f).Append(";\n");
+                    methods.Append("            if (").Append(f).Append(" != null)\n            {\n");
+                    methods.Append("                tw_HomeP_").Append(f).Append(" = new Vector3[").Append(f).Append(".Length];\n");
+                    methods.Append("                tw_HomeR_").Append(f).Append(" = new Quaternion[").Append(f).Append(".Length];\n");
+                    methods.Append("                for (int tw_I = 0; tw_I < ").Append(f).Append(".Length; tw_I++)\n");
+                    methods.Append("                    if (Utilities.IsValid(").Append(f).Append("[tw_I])) { tw_HomeP_").Append(f).Append("[tw_I] = ").Append(f).Append("[tw_I].transform.position; tw_HomeR_")
+                        .Append(f).Append("[tw_I] = ").Append(f).Append("[tw_I].transform.rotation; }\n");
+                    methods.Append("            }\n");
+                }
+                methods.Append("        }\n\n");
             }
 
             static bool IsPlainName(string expr) =>

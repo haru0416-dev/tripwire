@@ -2,7 +2,7 @@ Happens when all of a player's saved data (both PlayerData and PlayerObjects) ha
 
 Read or write saved data only after this event. At On Player Joined, the data may not have arrived yet, and data written too early can be overwritten when it arrives.
 
-**Whose** on the card starts as **Me**, so the actions run only when your own data is loaded. To read and write PlayerData, search for PlayerData in **Call Udon API**.
+**Whose** on the card starts as **Me**, so the actions run only when your own data is loaded. To read and write PlayerData, search for PlayerData in **Call Udon API**. To keep single values, make a variable **Saved**: Tripwire then loads and saves it ([Variables](/en/guide/variables#not-synced-synced-temporary-saved)).
 
 With Build & Test, saved data is kept locally for each test client. A client starts with no data, and its data is deleted when you close it.
 

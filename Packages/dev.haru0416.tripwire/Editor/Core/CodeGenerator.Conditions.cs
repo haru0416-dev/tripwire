@@ -26,8 +26,10 @@ namespace Tripwire.Core
                     bool number = !v.Type.IsArray && (v.Kind == ValueKind.Int || v.Kind == ValueKind.Float);
                     if (ordered && !number) { Error(Texts.T("Only number variables can be compared with < or >.", "大小を比べられるのは数の変数だけです。"), ev, act, cond: c); continue; }
                     if (!v.Type.HasEquality) { Error(Texts.T("Variables of type " + Texts.TypeName(v.Type) + " cannot be compared.", Texts.TypeName(v.Type) + " の変数は条件に使えません。"), ev, act, cond: c); continue; }
-                    string rhs = ValueExpr(v.Type, cond.Value, ev, act, -1, c);
-                    if (rhs == null) continue;
+                    // On/off against true / false is written as x or !x (see Test): no value to read.
+                    bool flag = v.Kind == ValueKind.Bool && !v.Type.IsArray && !ordered && cond.Value?.Source == ArgSource.Constant && cond.Value.Constant is bool;
+                    string rhs = flag ? null : ValueExpr(v.Type, cond.Value, ev, act, -1, c);
+                    if (rhs == null && !flag) continue;
                     // A negated condition holds exactly when the plain one fails.
                     bool wantHold = holds != cond.Negate;
                     parts.Add(Test(v, cond, rhs, wantHold));

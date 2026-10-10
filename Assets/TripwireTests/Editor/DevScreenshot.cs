@@ -179,6 +179,19 @@ namespace Tripwire.Tests
                 e.actions.Add(Call(load, null, new KArg(), new KArg { source = KArgSource.Self }));
                 t.events.Add(e);
             }
+            // TW_GATE=1: only the last card (its advanced settings open in state 1), for the people in a list, and the
+            // first variable saved.
+            if (System.Environment.GetEnvironmentVariable("TW_GATE") == "1")
+            {
+                var list = ScriptableObject.CreateInstance<TripwirePlayerList>();
+                list.name = "管理者";
+                list.names.AddRange(new[] { "haru", "alice", "bob" });
+                t.events.RemoveRange(0, t.events.Count - 1); // the one card, so its open settings fit in the window
+                t.events[0].gate = KGate.InList;
+                t.events[0].gateList = list;
+                t.events[0].expanded = true;
+                if (t.variables.Count > 0) { t.variables[0].synced = false; t.variables[0].saved = true; t.variables[0].saveKey = t.variables[0].name; }
+            }
             // TW_EMPTY=1: a freshly added trigger (the empty state).
             if (System.Environment.GetEnvironmentVariable("TW_EMPTY") == "1") { t.events.Clear(); t.variables.Clear(); t.comment = ""; }
             // TW_PERF=1: a trigger eight times as large, and the time per Inspector pass written to Logs/inspector-perf.txt.
@@ -187,6 +200,22 @@ namespace Tripwire.Tests
                 var events = t.events.ToList();
                 for (int n = 0; n < 7; n++) t.events.AddRange(events.Select(TripwireTriggerEditor.CloneOf<KEvent>));
                 foreach (var e in t.events) e.expanded = true;
+                // Every other card for the people in a list, a saved variable, and a world-sized scene around it (300 more
+                // triggers among 3000 objects) for what the Inspector reads from the scene.
+                var list = ScriptableObject.CreateInstance<TripwirePlayerList>();
+                list.names.AddRange(new[] { "haru", "alice", "bob" });
+                for (int i = 0; i < t.events.Count; i += 2) { t.events[i].gate = KGate.InList; t.events[i].gateList = list; }
+                var keep = t.variables.FirstOrDefault(v => v.typeName == "System.Int32");
+                if (keep != null) { keep.synced = false; keep.temporary = false; keep.saved = true; keep.saveKey = keep.name; }
+                for (int i = 0; i < 3000; i++)
+                {
+                    var go = new GameObject("Filler " + i);
+                    if (i % 10 == 0)
+                    {
+                        var other = go.AddComponent<TripwireTrigger>();
+                        other.variables.Add(new KVariable { name = "n", typeName = "System.Int32", saved = true, saveKey = "filler_" + i });
+                    }
+                }
             }
             window = ScriptableObject.CreateInstance<ShotWindow>();
             window.trigger = t;
@@ -290,13 +319,14 @@ namespace Tripwire.Tests
                 if (layoutMs.Count == 60 && kind == EventType.Layout)
                 {
                     // The parts: generating the program, the state check, variable type lookups.
-                    double Time(System.Action f) { var w = System.Diagnostics.Stopwatch.StartNew(); for (int i = 0; i < 20; i++) f(); return w.Elapsed.TotalMilliseconds / 20; }
+                    double Time(System.Action f) { var w = System.Diagnostics.Stopwatch.StartNew(); for (int i = 0; i < 20; i++) using (TripwireModel.Batch()) f(); return w.Elapsed.TotalMilliseconds / 20; } // one batch a pass, as the Inspector does
                     var g = TripwireCompiler.Generate(trigger);
                     File.WriteAllText("Logs/inspector-perf.txt", "events " + trigger.events.Count + "\nlayout ms (median of 60): " + Median(layoutMs).ToString("F2") + "\nrepaint ms (median): " + Median(repaintMs).ToString("F2")
                         + "\nGenerate ms: " + Time(() => TripwireCompiler.Generate(trigger)).ToString("F2")
                         + "\n  ToProgram ms: " + Time(() => TripwireModel.ToProgram(trigger)).ToString("F2")
                         + "\n  CodeGenerator.Generate ms: " + Time(() => CodeGenerator.Generate(TripwireModel.ToProgram(trigger))).ToString("F2")
                         + "\n  AddSceneWarnings ms: " + Time(() => TripwireLoops.AddSceneWarnings(trigger, g)).ToString("F2")
+                        + "\n  WarnSaved ms: " + Time(() => TripwireCompiler.WarnSaved(trigger, g)).ToString("F2")
                         + "\nGetState ms: " + Time(() => TripwireCompiler.GetState(trigger, g)).ToString("F2")
                         + "\nVariableType x all vars ms: " + Time(() => { foreach (var v in trigger.variables) TripwireModel.VariableType(v); }).ToString("F3") + "\n");
                 }

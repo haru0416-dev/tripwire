@@ -28,15 +28,15 @@ namespace Tripwire.Core
                     var tm = p.Events[i].Timer;
                     fields.Append("        bool tw_TimerOn").Append(i).Append(";\n        float tw_TimerDue").Append(i).Append(";\n");
                     var delay = tm.MaxSeconds > tm.MinSeconds
-                        ? "UnityEngine.Random.Range(" + Literal(ValueKind.Float, tm.MinSeconds) + ", " + Literal(ValueKind.Float, tm.MaxSeconds) + ")"
-                        : Literal(ValueKind.Float, tm.MinSeconds);
+                        ? "UnityEngine.Random.Range(" + ConstantExpr(ValueKind.Float, tm.MinSeconds, "Timer" + i + "_min") + ", " + ConstantExpr(ValueKind.Float, tm.MaxSeconds, "Timer" + i + "_max") + ")"
+                        : ConstantExpr(ValueKind.Float, tm.MinSeconds, "Timer" + i + "_min");
                     methods.Append("        void Tw_Schedule").Append(i).Append("()\n        {\n")
                         .Append("            float tw_D = ").Append(delay).Append(";\n")
                         .Append("            tw_TimerDue").Append(i).Append(" = UnityEngine.Time.time + tw_D;\n")
                         .Append("            SendCustomEventDelayedSeconds(\"_Tw_T").Append(i).Append("\", tw_D);\n        }\n\n");
                     // A small tolerance: the scheduler may run a tick a hair before Time.time reaches the due time. At most half
                     // the shortest interval, so a stale tick of a very fast timer (under 0.04 s) can't pass for a current one.
-                    var tolerance = Literal(ValueKind.Float, Math.Min(0.02f, tm.MinSeconds * 0.5f));
+                    var tolerance = ConstantExpr(ValueKind.Float, Math.Min(0.02f, tm.MinSeconds * 0.5f), "Timer" + i + "_tolerance");
                     methods.Append("        public void _Tw_T").Append(i).Append("()\n        {\n")
                         .Append("            if (!tw_TimerOn").Append(i).Append(" || UnityEngine.Time.time < tw_TimerDue").Append(i).Append(" - ").Append(tolerance).Append(") return;\n")
                         .Append(tm.Repeat ? "            Tw_Schedule" + i + "();\n" : "            tw_TimerOn" + i + " = false;\n")

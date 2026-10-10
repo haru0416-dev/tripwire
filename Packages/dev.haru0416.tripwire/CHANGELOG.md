@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.2
+
+- New actions: Toggle Component / Collider / Renderer Enabled, Respawn (back to where objects started; with VRC Object Sync for everyone), Send Random Event (one of several Custom events), Random Item (one object of a list into a variable)
+- Who can use it (a card's Advanced settings): anyone, the owner, the master, the instance's creator, or the people in / not in a Tripwire Player List (display names, shared between triggers); checked before anything is sent, and players a click card isn't for can't point at it
+- Saved variables: each player's value is kept in VRChat's PlayerData and given back (with its change event) when they come again; on/off, numbers, text, positions, colors and rotations
+- More starter cards: a button only admins can press, show how many players are here, count down from 10, put objects back, count each player's visits (saved)
+- Text shown to people (Set Text, Log) is entered on several lines, and can show {playerCount}, {myName} and {time} without a variable
+- Values typed in the Inspector (text, numbers, on/off, positions, colors, rotations, initial values, delays, player lists) are filled into the generated behaviour instead of written into its code: changing one applies at once with no script compile (a label's text: 13.6 s → 1 ms here), and triggers that differ only in such values share one program (40 everyday buttons: 31 → 4). Triggers made with an earlier version are applied again once
+- The Inspector draws big triggers faster again (72 open blocks: 24 ms → 8 ms generating a pass): inlining single-use bodies no longer starts over after each one
+- Checks: a saved variable changed many times a second (each change sends all of the player's saved data)
+- An input missing from an action's saved data (Set / Read Another Trigger's Variable, loops, Calculate...) is reported on the action instead of stopping the generator with an exception
+
 ## 0.1.1
 
 - The Inspector draws big triggers about ten times faster (72 blocks: 270 ms → 25 ms a pass): the loop check listed each block's links once instead of scanning all of them at every step

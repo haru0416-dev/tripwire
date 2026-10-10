@@ -31,6 +31,12 @@ namespace Tripwire.Core
                     { Error(Texts.T("Only unsynced values with a typed-in initial value (on/off, numbers, text...) can be temporary.", "一時的にできるのは、同期しない値の変数（オン/オフ・数・文字など）だけです。"), variable: i); continue; }
                     if (v.Synced && p.ContinuousSync && ElementTypeOf(v.Type) != null) // any list (object lists and int[] alike)
                     { Error(Texts.T("Lists can't be sent continuously; send them when they change.", "リストは「常に送り続ける」同期にできません。「変えたときに送る」にしてください。"), variable: i); continue; }
+                    if (v.SaveKey != null && (v.Synced || v.Temporary))
+                    { Error(Texts.T("A saved variable is each player's own: it can't be synced or temporary.", "保存する変数はその人だけの値なので、同期や一時的にはできません。"), variable: i); continue; }
+                    if (v.SaveKey != null && vars.Values.Any(x => x.SaveKey == v.SaveKey)) // the variables before this one
+                    { Error(Texts.T("Another variable is saved as '" + v.SaveKey + "': each would overwrite the other. Give this one another save name.", "ほかの変数も「" + v.SaveKey + "」の名前で保存しているので、互いに上書きします。こちらの保存の名前を変えてください。"), variable: i); continue; }
+                    if (v.SaveKey != null && SavedAs(v.Type) == null)
+                    { Error(Texts.T("Only on/off, numbers, text, positions, colors and rotations can be saved.", "保存できるのは、オン/オフ・数・文字・位置・色・回転の変数です。"), variable: i); continue; }
                     if (v.Temporary && v.External)
                     { Error(Texts.T("Another trigger sets this variable, so it can't be temporary.", "ほかのトリガーが変えているので、一時的にはできません。"), variable: i); continue; }
                     if (v.Initial != null && (!IsConstantKindCompatible(v.Kind, v.Initial) || !EnumMemberExists(v.Type, v.Initial))) { Error(Texts.T("Initial value does not match the variable type.", "最初の値が変数の型と合いません。"), variable: i); continue; }
@@ -42,9 +48,13 @@ namespace Tripwire.Core
                     else if (v.Kind == ValueKind.Enum && v.Initial != null && !v.Type.IsArray) init = Literal(v.Type, v.Initial);
                     // Temporary variables are locals of each event body that uses them (declared there), not fields.
                     if (v.Temporary) continue;
+                    // The initial value as the field's own serialized value, filled by the editor (ConstantsInFields).
+                    bool initBound = ConstantsInFields && FieldKind(v.Kind) && !v.Type.IsArray;
                     fields.Append("        ").Append(!v.Synced ? "" : v.Interpolate && p.ContinuousSync ? "[UdonSynced(UdonSyncMode.Linear)] " : "[UdonSynced] ").Append("public ").Append(type).Append(' ').Append(FieldOf(v.Name));
-                    if (init != null) fields.Append(" = ").Append(init);
+                    if (init != null && !initBound) fields.Append(" = ").Append(init);
                     fields.Append(";\n");
+                    if (initBound)
+                        Result.Bindings.Add(new FieldBinding { Field = FieldOf(v.Name), Kind = BindingKind.Constant, Variable = i, Constant = ConstantValue(v.Kind, v.Initial ?? DefaultOf(v.Kind)) });
                     // Always bound, even with nothing assigned: clearing the Inspector value must clear the field too.
                     if (v.Kind == ValueKind.Url && !v.Type.IsArray && v.Initial is string url && url.Length > 0)
                         Result.Bindings.Add(new FieldBinding { Field = FieldOf(v.Name), Kind = BindingKind.VariableInitial, Variable = i, UnityType = "VRC.SDKBase.VRCUrl", UrlValue = url });
@@ -52,9 +62,12 @@ namespace Tripwire.Core
                         Result.Bindings.Add(new FieldBinding { Field = FieldOf(v.Name), Kind = BindingKind.VariableInitial, Variable = i, UnityType = v.Type.UnityType, IsArray = v.Type.IsArray });
                     if (TracksReceivedChange(v) && v.Type.HasEquality)
                     {
-                        fields.Append("        ").Append(type).Append(" tw_Prev_").Append(Ident(v.Name));
-                        if (init != null) fields.Append(" = ").Append(init);
+                        // The value last seen starts as the initial value: bound alongside it.
+                        fields.Append("        ").Append(initBound ? "public " : "").Append(type).Append(" tw_Prev_").Append(Ident(v.Name));
+                        if (init != null && !initBound) fields.Append(" = ").Append(init);
                         fields.Append(";\n");
+                        if (initBound)
+                            Result.Bindings.Add(new FieldBinding { Field = "tw_Prev_" + Ident(v.Name), Kind = BindingKind.Constant, Variable = i, Constant = ConstantValue(v.Kind, v.Initial ?? DefaultOf(v.Kind)) });
                     }
                 }
             }
@@ -66,7 +79,7 @@ namespace Tripwire.Core
             /// Synced or watched variables go through Tw_Set_ (ownership, serialization, change events); any other
             /// variable is a plain field, set directly.
             /// </summary>
-            bool NeedsSetter(VariableDecl v) => v.Synced || Watched(v);
+            bool NeedsSetter(VariableDecl v) => v.Synced || Watched(v) || v.SaveKey != null;
 
             /// <summary>Variables whose Tw_Set_ some code calls. Only those get one: bodies are written before the setters.</summary>
             readonly HashSet<string> settersCalled = new HashSet<string>(StringComparer.Ordinal);
@@ -127,6 +140,9 @@ namespace Tripwire.Core
                         {
                             methods.Append("            ").Append(f).Append(" = value;\n");
                         }
+                        // Saved only once the player's data has come back: before that it would overwrite what they had.
+                        if (v.SaveKey != null)
+                            methods.Append("            if (tw_Restored) VRC.SDK3.Persistence.PlayerData.Set").Append(SavedAs(v.Type)).Append('(').Append(StringLiteral(v.SaveKey)).Append(", value);\n");
                         if (watched) methods.Append("            ").Append(ChangedMethodOf(v.Name)).Append("();\n");
                         methods.Append("        }\n\n");
                     }
@@ -163,6 +179,27 @@ namespace Tripwire.Core
                     }
                     methods.Append("        }\n\n");
                 }
+            }
+
+            bool SavesVariables() => vars.Values.Any(v => v.SaveKey != null);
+
+            /// <summary>
+            /// Saved variables come back when the local player's data is loaded: each one present is set through its
+            /// setter (so change events run), and from then on changes are saved.
+            /// </summary>
+            void EmitRestore()
+            {
+                if (!SavesVariables()) return;
+                fields.Append("        bool tw_Restored;\n");
+                methods.Append("        void Tw_Restore(VRCPlayerApi player)\n        {\n");
+                methods.Append("            if (!Utilities.IsValid(player) || !player.isLocal) return;\n");
+                foreach (var v in vars.Values.Where(x => x.SaveKey != null))
+                {
+                    var type = TypeName(v.Type);
+                    methods.Append("            { ").Append(type).Append(" tw_S; if (VRC.SDK3.Persistence.PlayerData.TryGet").Append(SavedAs(v.Type))
+                        .Append("(player, ").Append(StringLiteral(v.SaveKey)).Append(", out tw_S)) ").Append(SetStatement(v, "tw_S")).Append(" }\n");
+                }
+                methods.Append("            tw_Restored = true;\n        }\n\n");
             }
 
             // ---- actions that write a variable ----
@@ -225,6 +262,22 @@ namespace Tripwire.Core
                         if (call.Args[3]?.Source == ArgSource.Constant && call.Args[3].Constant is int zero && zero == 0) { Error(Texts.T("Dividing by 0.", "0 で割っています。"), ev, act, 3); return null; }
                         return "((" + b + ") == 0 ? 0 : (" + a + ")" + sign + "(" + b + "))";
                 }
+            }
+
+            /// <summary>Random Item: one object of a list (dragged in, or a list variable) into a GameObject variable.</summary>
+            void EmitRandomItem(int ev, EventSpec spec, int act, ActionCall call, StringBuilder body)
+            {
+                var name = call.Args.Count > 0 ? call.Args[0]?.Constant as string : null;
+                if (name == null || !vars.TryGetValue(name, out var v)) { Error(MissingVariable(name), ev, act, 0); return; }
+                if (v.Type.IsArray || v.Kind != ValueKind.Object || v.Type.UnityType != "UnityEngine.GameObject")
+                { Error(Texts.T("Pick an Object (GameObject) variable.", "オブジェクトの変数を選んでください。"), ev, act, 0); return; }
+                var list = ObjectOperand(spec, ParamType.Objects("UnityEngine.GameObject"), call.Args.Count > 1 ? call.Args[1] : null, ev, act, 1, "list");
+                if (list == null) return;
+                WarnSyncedWrite(v, ev, act);
+                if (list.ArrayField == null) { AppendGuarded(body, "            ", list.Guards, SetStatement(v, list.Expr)); return; } // a single object
+                var f = list.ArrayField;
+                body.Append("            if (").Append(f).Append(" != null && ").Append(f).Append(".Length > 0) ")
+                    .Append(SetStatement(v, f + "[UnityEngine.Random.Range(0, " + f + ".Length)]")).Append('\n');
             }
 
             /// <summary>Get Component: `v = source.GetComponent<T>()` (or InChildren / InParent), T being the variable's type.</summary>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace Tripwire.Core
@@ -149,6 +150,28 @@ namespace Tripwire.Core
             return w == h || TypeAssignable(w, h);
         }
 
+        /// <summary>The Custom event names Send Random Event picks from: one per line (or separated by , or 、).</summary>
+        public static List<string> RandomEventNames(string text) =>
+            (text ?? "").Split(new[] { '\n', ',', '、' }, StringSplitOptions.RemoveEmptyEntries).Select(n => n.Trim()).Where(n => n.Length > 0).Distinct().ToList();
+
+        /// <summary>The PlayerData method suffix for a value saved per player (SetInt / TryGetInt...), or null when it can't be saved.</summary>
+        public static string SavedAs(ParamType t)
+        {
+            if (t == null || t.IsArray) return null;
+            switch (t.Kind)
+            {
+                case ValueKind.Bool: return "Bool";
+                case ValueKind.Int: return "Int";
+                case ValueKind.Float: return "Float";
+                case ValueKind.String: return "String";
+                case ValueKind.Vector2: return "Vector2";
+                case ValueKind.Vector3: return "Vector3";
+                case ValueKind.Color: return "Color";
+                case ValueKind.Quaternion: return "Quaternion";
+                default: return null;
+            }
+        }
+
         /// <summary>Kinds Calculate can put a result into.</summary>
         public static bool Calculable(ValueKind k) =>
             k == ValueKind.Int || k == ValueKind.Float || k == ValueKind.Vector2 || k == ValueKind.Vector3 || k == ValueKind.Color || k == ValueKind.String;
@@ -192,6 +215,34 @@ namespace Tripwire.Core
                     return "new Quaternion(" + Floats(q, 4) + ")";
                 default:
                     throw new ArgumentException("No literal for " + kind);
+            }
+        }
+
+        /// <summary>Kinds whose constants can go into fields (<see cref="ConstantsInFields"/>): the ones Udon serializes.</summary>
+        static bool FieldKind(ValueKind k) =>
+            k == ValueKind.Bool || k == ValueKind.Int || k == ValueKind.Float || k == ValueKind.String
+            || k == ValueKind.Vector2 || k == ValueKind.Vector3 || k == ValueKind.Color || k == ValueKind.Quaternion;
+
+        /// <summary>The value a field holds for a constant, exactly as <see cref="Literal(ValueKind, object)"/> writes it.</summary>
+        internal static object ConstantValue(ValueKind kind, object value)
+        {
+            float F(float f) => float.IsNaN(f) || float.IsInfinity(f) ? 0f : f;
+            float[] Floats(int n) { var v = value as float[] ?? new float[n]; return Enumerable.Range(0, n).Select(i => F(i < v.Length ? v[i] : 0f)).ToArray(); }
+            switch (kind)
+            {
+                case ValueKind.Bool: return value is bool b && b;
+                case ValueKind.Int: return Convert.ToInt32(value ?? 0, CultureInfo.InvariantCulture);
+                case ValueKind.Float: return F(Convert.ToSingle(value ?? 0f, CultureInfo.InvariantCulture));
+                case ValueKind.String: return value as string ?? "";
+                case ValueKind.Vector2: return Floats(2);
+                case ValueKind.Vector3: return Floats(3);
+                case ValueKind.Color: return Floats(4);
+                case ValueKind.Quaternion:
+                    // As the literal: the angles turned into a rotation first, then each part that isn't a number made 0.
+                    var e = value as float[] ?? new float[3];
+                    var q = UnityMath.Euler(e.Length > 0 ? e[0] : 0f, e.Length > 1 ? e[1] : 0f, e.Length > 2 ? e[2] : 0f);
+                    return Enumerable.Range(0, 4).Select(i => F(q[i])).ToArray();
+                default: throw new ArgumentException("No field value for " + kind);
             }
         }
 

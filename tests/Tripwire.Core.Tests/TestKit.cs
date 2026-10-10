@@ -8,9 +8,16 @@ using Xunit;
 /// <summary>Helpers the generator tests share (use with <c>using static TestKit;</c>).</summary>
 public static class TestKit
 {
-    /// <summary>The tests check each event's own code; InlineTests turn the final tidy-up back on where they need it.</summary>
+    /// <summary>
+    /// The tests check each event's own code, with the values written in; InlineTests turn the final tidy-up back on
+    /// where they need it, ConstantFieldTests the values in fields.
+    /// </summary>
     [System.Runtime.CompilerServices.ModuleInitializer]
-    internal static void KeepBodiesSeparate() => CodeGenerator.KeepBodiesSeparate = true;
+    internal static void ReadableCode()
+    {
+        CodeGenerator.KeepBodiesSeparate = true;
+        CodeGenerator.ConstantsInFields = false;
+    }
 
     /// <summary>The source parses as C# 9 (the language UdonSharp compiles).</summary>
     public static void AssertParses(GeneratedProgram g)

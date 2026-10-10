@@ -14,6 +14,8 @@ A switch that shows and hides a mirror when clicked. Start with your world's sce
 
 The starter **Click to show / hide** does the steps below in one go. Here they are one by one, so you can see what it makes.
 
+Other starters include **A button only admins can press**, **Show how many players are here**, **Count down from 10**, **Put objects back where they were** and **Count each player's visits (saved)**. Each works once you drag in the objects or texts.
+
 ## Pick "when"
 
 Press **+ Add a "when" (event)**. In the list, pick the **Common** category, then **Interact** (clicking the object).

@@ -120,7 +120,37 @@ namespace Tripwire.Editor
             UdonApi.InstallEditorKnowledge();
             var g = CodeGenerator.Generate(TripwireModel.ToProgram(t));
             TripwireLoops.AddSceneWarnings(t, g);
+            WarnSaved(t, g);
             return g;
+        }
+
+        /// <summary>
+        /// Saved variables need the player's data to arrive on this object (On Player Restored), and a save name holds one
+        /// type: another trigger saving another type under it would overwrite this one's value.
+        /// </summary>
+        internal static void WarnSaved(TripwireTrigger t, GeneratedProgram g)
+        {
+            if (!t.variables.Any(v => v.saved)) return;
+            if (!t.gameObject.activeInHierarchy)
+                g.Diagnostics.Add(new Diagnostic { Severity = Severity.Warning, Variable = t.variables.FindIndex(v => v.saved), Message = Texts.T(
+                    "This object is hidden at first: it may not get the player's saved data when they join, and then saved variables neither come back nor are saved. Put them on an object that is shown from the start.",
+                    "このオブジェクトは最初は非表示なので、入ったときの保存データを受け取れないことがあります。その場合、保存する変数は戻らず、保存もされません。最初から表示されているオブジェクトに置いてください。") });
+            var others = InOpenScenesAndPrefab<TripwireTrigger>().Where(x => x != t).ToList();
+            for (int i = 0; i < t.variables.Count; i++)
+            {
+                var v = t.variables[i];
+                if (!v.saved) continue;
+                var key = string.IsNullOrEmpty(v.saveKey) ? v.name : v.saveKey;
+                foreach (var other in others)
+                {
+                    var clash = other.variables.FirstOrDefault(x => x.saved && (string.IsNullOrEmpty(x.saveKey) ? x.name : x.saveKey) == key && x.typeName != v.typeName);
+                    if (clash == null) continue;
+                    g.Diagnostics.Add(new Diagnostic { Severity = Severity.Warning, Variable = i, Message = Texts.T(
+                        other.name + " saves another kind of value as '" + key + "': each overwrites the other. Change one save name.",
+                        other.name + " も「" + key + "」の名前で、別の種類の値を保存しているので、互いに上書きします。どちらかの保存の名前を変えてください。") });
+                    break;
+                }
+            }
         }
 
         public static Type FindGeneratedType(string className)
@@ -136,7 +166,22 @@ namespace Tripwire.Editor
             if (blockedReason != null) return State.Blocked;
             if (FailureOf(t) != null) return State.ApplyFailed;
             if (t.generated == null || t.generated.gameObject != t.gameObject || t.generatedClass != g.ClassName) return State.NeedsApply;
+            // Values live in the behaviour, not the class (CodeGenerator.ConstantsInFields): one changed without an apply
+            // (a script, the Debug Inspector) leaves the same class with the old value.
+            if (!ValuesApplied(t, g)) return State.NeedsApply;
             return State.UpToDate;
+        }
+
+        /// <summary>Whether the behaviour holds each value the trigger's constant fields should have.</summary>
+        static bool ValuesApplied(TripwireTrigger t, GeneratedProgram g)
+        {
+            foreach (var b in g.Bindings)
+            {
+                if (b.Kind != BindingKind.Constant) continue;
+                if (!t.generated.publicVariables.TryGetVariableValue(b.Field, out object stored)) return false;
+                if (!SameValue(stored, ConstantFor(stored?.GetType() ?? typeof(object), b.Constant))) return false;
+            }
+            return true;
         }
 
         /// <summary>
