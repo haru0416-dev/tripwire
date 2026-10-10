@@ -24,7 +24,7 @@ public class SyncWarningTests
     public void CountingInASyncedChangeBlockIsReported()
     {
         // "When pressed changes, add 1 to count": every receiver adds 1 too, so count grows by the number of players.
-        var w = Assert.Single(Warnings(Counter(true, true)).Where(d => d.Message.Contains("受け取った全員") || d.Message.Contains("every player who receives")));
+        var w = Assert.Single(Warnings(Counter(true, true)), d => d.Message.Contains("受け取った全員") || d.Message.Contains("every player who receives"));
         Assert.Equal(1, w.Event);
         Assert.Equal(0, w.Action);
         Assert.Contains("count", w.Message);
